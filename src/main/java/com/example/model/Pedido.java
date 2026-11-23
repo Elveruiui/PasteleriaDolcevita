@@ -40,6 +40,7 @@ public class Pedido {
     private String modalidad_entrega;
     private String estado;
     private BigDecimal total;
+    private BigDecimal costo_delivery;
     private String observacion;
 
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL)
@@ -126,6 +127,14 @@ public class Pedido {
 
     public void setTotal(BigDecimal total) {
         this.total = total;
+    }
+
+    public BigDecimal getCosto_delivery() {
+        return costo_delivery;
+    }
+
+    public void setCosto_delivery(BigDecimal costo_delivery) {
+        this.costo_delivery = costo_delivery;
     }
 
     public String getObservacion() {

@@ -48,16 +48,17 @@ function dibujar(pedidos, productos) {
   const recientes = pedidos.slice().sort((a, b) => b.id_pedido - a.id_pedido).slice(0, 5);
   const filasRecientes = recientes.map((p) =>
     '<tr><td><a href="pedido.html?id=' + p.id_pedido + '"><strong>' + codigoPedido(p.id_pedido) + "</strong></a></td><td>" +
-    esc(nombreCompleto(p.usuario)) + "</td><td>" + precio(p.total) + "</td><td>" + insigniaEstadoPedido(p.estado) + "</td></tr>").join("");
+    esc(nombreCompleto(p.usuario)) + "</td><td>" + precio(p.total) + "</td><td>" + insigniaEstadoPedido(p.estado, p.modalidad_entrega) + "</td></tr>").join("");
 
   const pocos = productos.filter((p) => Number(p.estado) === 1 && p.stock <= 5).sort((a, b) => a.stock - b.stock).slice(0, 5);
   const filasStock = pocos.map((p) =>
     '<tr><td><div class="persona">' + imagenProducto(p.imagen) + "<span>" + esc(p.nombre) + '</span></div></td><td class="stock-bajo">' + p.stock + "</td></tr>").join("");
 
   contenido.innerHTML =
-    '<div class="kpis cinco">' +
+    '<div class="kpis seis">' +
     tarjeta("ic-ambar", "fa-cart-shopping", contar(pedidos, "PENDIENTE"), "Pendientes") +
     tarjeta("ic-azul", "fa-clipboard-check", contar(pedidos, "CONFIRMADO"), "Confirmados") +
+    tarjeta("ic-morado", "fa-box-open", contar(pedidos, "LISTO"), "Listos") +
     tarjeta("ic-rosa", "fa-truck", contar(pedidos, "EN_CAMINO"), "En camino") +
     tarjeta("ic-verde", "fa-circle-check", contar(pedidos, "ENTREGADO"), "Entregados") +
     tarjeta("ic-rojo", "fa-circle-xmark", contar(pedidos, "CANCELADO"), "Cancelados") +

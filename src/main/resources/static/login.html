@@ -26,6 +26,10 @@
     </div></nav>
 </header>
 <main>
+<div class="login-pestanas">
+    <button type="button" class="activo" data-vista="login"><i class="fa-solid fa-right-to-bracket"></i> Iniciar sesión</button>
+    <button type="button" data-vista="registro"><i class="fa-solid fa-user-plus"></i> Registrarse</button>
+</div>
 <section class="login-caja">
     <div class="login-lado">
         <span class="ayuda" style="color:#f5e7e1;letter-spacing:.15em;text-transform:uppercase">Bienvenido</span>
@@ -94,25 +98,35 @@ function redirigirPorRol(usuario) {
   if (rol.includes("ADMIN")) {
     location.href = "admin/index.html";
   } else if (rol.includes("MOTOR")) {
-    location.href = "admin/entregas.html";
+    location.href = "motorizado/index.html";
   } else {
     location.href = redirectParam || "mis-pedidos.html";
   }
 }
 
+function mostrarVista(vista) {
+  const esRegistro = vista === "registro";
+  errorLogin.hidden = true;
+  errorRegistro.hidden = true;
+  formLogin.hidden = esRegistro;
+  formRegistro.hidden = !esRegistro;
+  document.querySelectorAll(".login-pestanas button").forEach((b) => b.classList.toggle("activo", b.dataset.vista === vista));
+}
+
+document.querySelectorAll(".login-pestanas button").forEach((b) =>
+  b.addEventListener("click", () => mostrarVista(b.dataset.vista)));
+
 document.getElementById("irRegistro").addEventListener("click", (e) => {
   e.preventDefault();
-  errorLogin.hidden = true;
-  formLogin.hidden = true;
-  formRegistro.hidden = false;
+  mostrarVista("registro");
 });
 
 document.getElementById("irLogin").addEventListener("click", (e) => {
   e.preventDefault();
-  errorRegistro.hidden = true;
-  formRegistro.hidden = true;
-  formLogin.hidden = false;
+  mostrarVista("login");
 });
+
+mostrarVista(location.hash === "#registro" ? "registro" : "login");
 
 formLogin.addEventListener("submit", async (e) => {
   e.preventDefault();

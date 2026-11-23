@@ -94,9 +94,9 @@ class ReporteServiceTest {
         Sheet resumen = libro.getSheet("Resumen");
 
         assertEquals(1.0, resumen.getRow(1).getCell(1).getNumericCellValue(), 0.001);
-        assertEquals(1.0, resumen.getRow(5).getCell(1).getNumericCellValue(), 0.001);
-        assertEquals(2.0, resumen.getRow(6).getCell(1).getNumericCellValue(), 0.001);
-        assertEquals(100.0, resumen.getRow(7).getCell(1).getNumericCellValue(), 0.001);
+        assertEquals(1.0, resumen.getRow(6).getCell(1).getNumericCellValue(), 0.001);
+        assertEquals(2.0, resumen.getRow(7).getCell(1).getNumericCellValue(), 0.001);
+        assertEquals(100.0, resumen.getRow(8).getCell(1).getNumericCellValue(), 0.001);
     }
 
     @Test
@@ -106,7 +106,7 @@ class ReporteServiceTest {
         XSSFWorkbook libro = new XSSFWorkbook(new ByteArrayInputStream(reporteService.generarReportePedidos()));
 
         assertEquals(0, libro.getSheet("Pedidos").getLastRowNum());
-        assertEquals(0.0, libro.getSheet("Resumen").getRow(7).getCell(1).getNumericCellValue(), 0.001);
+        assertEquals(0.0, libro.getSheet("Resumen").getRow(8).getCell(1).getNumericCellValue(), 0.001);
     }
 
     @Test

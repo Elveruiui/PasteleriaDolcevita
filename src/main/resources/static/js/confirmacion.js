@@ -4,7 +4,7 @@ const idPedido = parametros.get("id");
 const esNuevo = parametros.get("nuevo") === "1";
 
 const CLASES_ESTADO = {
-  PENDIENTE: "e-pendiente", CONFIRMADO: "e-confirmado", EN_CAMINO: "e-camino",
+  PENDIENTE: "e-pendiente", CONFIRMADO: "e-confirmado", LISTO: "e-listo", EN_CAMINO: "e-camino",
   ENTREGADO: "e-entregado", CANCELADO: "e-cancelado",
 };
 
@@ -20,7 +20,8 @@ function formatearFecha(texto) {
   return d + "/" + m + "/" + a + (hora ? " · " + hora.slice(0, 5) : "");
 }
 
-function textoEstado(estado) {
+function textoEstado(estado, modalidad) {
+  if (estado === "LISTO" && String(modalidad || "").toLowerCase().includes("recojo")) return "Listo para recojo";
   const t = String(estado || "").replace(/_/g, " ").toLowerCase();
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
@@ -72,7 +73,8 @@ async function iniciar() {
         <div class="fila-dato"><span>Modalidad</span><span>${esc(p.modalidad_entrega)}</span></div>
         <div class="fila-dato" style="align-items:flex-start"><span>Dirección</span><span style="text-align:right">${formatearDireccionCliente(p.direccion)}</span></div>
         <div class="fila-dato"><span>Observaciones</span><span>${esc(p.observacion || "—")}</span></div>
-        <div class="fila-dato"><span>Estado</span><span class="estado ${CLASES_ESTADO[estado] || "e-nuevo"}">${esc(textoEstado(estado))}</span></div>
+        <div class="fila-dato"><span>Estado</span><span class="estado ${CLASES_ESTADO[estado] || "e-nuevo"}">${esc(textoEstado(estado, p.modalidad_entrega))}</span></div>
+        ${Number(p.costo_delivery) > 0 ? `<div class="fila-dato"><span>Productos</span><span>${formatearPrecio(Number(p.total) - Number(p.costo_delivery))}</span></div><div class="fila-dato"><span>Delivery</span><span>${formatearPrecio(p.costo_delivery)}</span></div>` : ""}
         <div class="fila-total"><span>Total</span><span class="monto">${formatearPrecio(p.total)}</span></div>
       </div>
       <a class="btn btn-dorado btn-bloque" href="mis-pedidos.html">Ir a mis pedidos</a>`;

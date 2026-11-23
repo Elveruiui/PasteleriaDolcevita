@@ -49,6 +49,8 @@ public class SecurityConfig {
                 
                 .antMatchers(HttpMethod.PUT, "/usuario/actualizar/**", "/usuario/cambiarContrasena/**").authenticated()
 
+                .antMatchers("/motorizado/**").hasRole("MOTORIZADO")
+                .antMatchers(HttpMethod.PUT, "/entrega/cambiarEstado/**").hasRole("MOTORIZADO")
                 .antMatchers(
                     "/admin/entregas.html",
                     "/admin/admin.css",

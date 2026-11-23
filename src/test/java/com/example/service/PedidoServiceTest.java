@@ -204,4 +204,144 @@ class PedidoServiceTest {
 
         assertTrue(error.getMessage().contains("no encontrado"));
     }
+
+    private Pedido crearPedidoConModalidad(String estado, String modalidad) {
+        Pedido pedido = crearPedido(estado);
+        pedido.setModalidad_entrega(modalidad);
+        return pedido;
+    }
+
+    @Test
+    void actualizarEstado_deliveryAceptaListoYEnCamino() throws Exception {
+        Pedido pedido = crearPedidoConModalidad("CONFIRMADO", "Delivery");
+        when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+        when(pedidoRepository.save(any(Pedido.class))).thenAnswer(i -> i.getArgument(0));
+
+        assertEquals("LISTO", pedidoService.actualizarEstado(1L, "listo").getEstado());
+        assertEquals("EN_CAMINO", pedidoService.actualizarEstado(1L, "en_camino").getEstado());
+    }
+
+    @Test
+    void actualizarEstado_recojoAceptaListo() throws Exception {
+        Pedido pedido = crearPedidoConModalidad("CONFIRMADO", "Recojo");
+        when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+        when(pedidoRepository.save(any(Pedido.class))).thenAnswer(i -> i.getArgument(0));
+
+        assertEquals("LISTO", pedidoService.actualizarEstado(1L, "LISTO").getEstado());
+    }
+
+    @Test
+    void actualizarEstado_recojoRechazaEnCamino() {
+        Pedido pedido = crearPedidoConModalidad("LISTO", "Recojo");
+        when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+
+        Exception error = assertThrows(Exception.class,
+                () -> pedidoService.actualizarEstado(1L, "EN_CAMINO"));
+
+        assertTrue(error.getMessage().contains("EN_CAMINO"));
+        verify(pedidoRepository, never()).save(any(Pedido.class));
+    }
+
+    @Test
+    void actualizarEstado_recojoAceptaEntregado() throws Exception {
+        Pedido pedido = crearPedidoConModalidad("LISTO", "Recojo");
+        when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+        when(pedidoRepository.save(any(Pedido.class))).thenAnswer(i -> i.getArgument(0));
+
+        assertEquals("ENTREGADO", pedidoService.actualizarEstado(1L, "ENTREGADO").getEstado());
+    }
+
+    @Test
+    void actualizarEstado_noPermiteRegresarAUnEstadoAnterior() {
+        Pedido pedido = crearPedidoConModalidad("LISTO", "Delivery");
+        when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+
+        Exception error = assertThrows(Exception.class,
+                () -> pedidoService.actualizarEstado(1L, "CONFIRMADO"));
+
+        assertTrue(error.getMessage().contains("regresar"));
+        verify(pedidoRepository, never()).save(any(Pedido.class));
+    }
+
+    @Test
+    void actualizarEstado_noPermiteCancelarUnPedidoEntregado() {
+        Pedido pedido = crearPedidoConModalidad("ENTREGADO", "Recojo");
+        when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+
+        assertThrows(Exception.class, () -> pedidoService.actualizarEstado(1L, "CANCELADO"));
+        verify(pedidoRepository, never()).save(any(Pedido.class));
+    }
+
+    @Test
+    void actualizarEstado_permiteCancelarDesdeListo() throws Exception {
+        Pedido pedido = crearPedidoConModalidad("LISTO", "Delivery");
+        when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+        when(pedidoRepository.save(any(Pedido.class))).thenAnswer(i -> i.getArgument(0));
+
+        assertEquals("CANCELADO", pedidoService.actualizarEstado(1L, "CANCELADO").getEstado());
+    }
+
+    @Test
+    void actualizarEstadoSegunRol_adminNoPuedePonerEnCaminoUnDelivery() {
+        Pedido pedido = crearPedidoConModalidad("LISTO", "Delivery");
+        when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+
+        Exception error = assertThrows(Exception.class,
+                () -> pedidoService.actualizarEstadoSegunRol(1L, "EN_CAMINO", false));
+
+        assertTrue(error.getMessage().contains("motorizado"));
+        verify(pedidoRepository, never()).save(any(Pedido.class));
+    }
+
+    @Test
+    void actualizarEstadoSegunRol_motorizadoPuedePonerEnCaminoUnDelivery() throws Exception {
+        Pedido pedido = crearPedidoConModalidad("LISTO", "Delivery");
+        when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+        when(pedidoRepository.save(any(Pedido.class))).thenAnswer(i -> i.getArgument(0));
+
+        assertEquals("EN_CAMINO", pedidoService.actualizarEstadoSegunRol(1L, "EN_CAMINO", true).getEstado());
+    }
+
+    @Test
+    void actualizarEstadoSegunRol_adminPuedeEntregarUnRecojo() throws Exception {
+        Pedido pedido = crearPedidoConModalidad("LISTO", "Recojo");
+        when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+        when(pedidoRepository.save(any(Pedido.class))).thenAnswer(i -> i.getArgument(0));
+
+        assertEquals("ENTREGADO", pedidoService.actualizarEstadoSegunRol(1L, "ENTREGADO", false).getEstado());
+    }
+
+    @Test
+    void calcularCostoDelivery_aplicaElMinimo() {
+        assertEquals(0, new BigDecimal("5.00").compareTo(PedidoService.calcularCostoDelivery("Delivery", new BigDecimal("28.00"))));
+    }
+
+    @Test
+    void calcularCostoDelivery_aplicaElCincoPorCiento() {
+        assertEquals(0, new BigDecimal("7.50").compareTo(PedidoService.calcularCostoDelivery("Delivery", new BigDecimal("150.00"))));
+    }
+
+    @Test
+    void calcularCostoDelivery_aplicaElMaximo() {
+        assertEquals(0, new BigDecimal("15.00").compareTo(PedidoService.calcularCostoDelivery("Delivery", new BigDecimal("470.00"))));
+    }
+
+    @Test
+    void calcularCostoDelivery_recojoNoCobra() {
+        assertEquals(0, BigDecimal.ZERO.compareTo(PedidoService.calcularCostoDelivery("Recojo", new BigDecimal("150.00"))));
+    }
+
+    @Test
+    void guardar_deliverySumaElCostoAlTotal() throws Exception {
+        Producto torta = crearProducto(1L, "Blooming Celebration", 150.0, 5);
+        when(productoRepository.findById(1L)).thenReturn(Optional.of(torta));
+        when(pedidoRepository.save(any(Pedido.class))).thenAnswer(i -> i.getArgument(0));
+
+        Pedido pedido = crearPedido(null, crearDetalle(referencia(1L), 1));
+        pedido.setModalidad_entrega("Delivery");
+        Pedido resultado = pedidoService.guardar(pedido);
+
+        assertEquals(0, new BigDecimal("7.50").compareTo(resultado.getCosto_delivery()));
+        assertEquals(0, new BigDecimal("157.50").compareTo(resultado.getTotal()));
+    }
 }

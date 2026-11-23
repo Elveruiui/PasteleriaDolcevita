@@ -1,10 +1,13 @@
 package com.example.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -64,6 +67,21 @@ public class EntregaController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Entrega no encontrada con el ID: " + id);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al buscar entrega por ID");
+        }
+    }
+
+    @PutMapping("/cambiarEstado/{id}")
+    public ResponseEntity<?> cambiarEstado(@PathVariable("id") Long id, @RequestBody Map<String, Object> datos) {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String correo = auth != null ? auth.getName() : null;
+            int estado = Integer.parseInt(String.valueOf(datos.get("estado")));
+            Object observacion = datos.get("observacion");
+            Entrega entrega = entregaService.cambiarEstadoPorMotorizado(id, estado,
+                    observacion == null ? null : String.valueOf(observacion), correo);
+            return ResponseEntity.ok(entrega);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
 

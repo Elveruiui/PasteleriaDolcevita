@@ -3,7 +3,7 @@ const pestanas = document.getElementById("pestanas");
 
 const GRUPOS = [
   { id: "todos", texto: "Todos", estados: null },
-  { id: "proceso", texto: "En proceso", estados: ["PENDIENTE", "CONFIRMADO"] },
+  { id: "proceso", texto: "En proceso", estados: ["PENDIENTE", "CONFIRMADO", "LISTO"] },
   { id: "camino", texto: "En camino", estados: ["EN_CAMINO"] },
   { id: "entregados", texto: "Entregados", estados: ["ENTREGADO"] },
   { id: "cancelados", texto: "Cancelados", estados: ["CANCELADO"] },
@@ -12,7 +12,7 @@ const GRUPOS = [
 ];
 
 const CLASES_ESTADO = {
-  PENDIENTE: "e-pendiente", CONFIRMADO: "e-confirmado", EN_CAMINO: "e-camino",
+  PENDIENTE: "e-pendiente", CONFIRMADO: "e-confirmado", LISTO: "e-listo", EN_CAMINO: "e-camino",
   ENTREGADO: "e-entregado", CANCELADO: "e-cancelado",
 };
 
@@ -29,7 +29,8 @@ function estadoDe(pedido) {
   return String(pedido.estado || "").toUpperCase();
 }
 
-function textoEstado(estado) {
+function textoEstado(estado, modalidad) {
+  if (estado === "LISTO" && String(modalidad || "").toLowerCase().includes("recojo")) return "Listo para recojo";
   const t = estado.replace(/_/g, " ").toLowerCase();
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
@@ -81,7 +82,7 @@ function dibujarListaPedidos() {
       "<div><strong>" + codigo(p.id_pedido) + "</strong><small>" + fechaCorta(p.fecha_pedido) + "</small></div>" +
       '<div class="prod"><img src="' + urlImagen(primero ? primero.imagen : null) + '" alt="">' +
       "<div>" + esc(primero ? primero.nombre + tamanoPrimero : "Pedido") + "<small>" + cantidad + (cantidad === 1 ? " producto" : " productos") + "</small></div></div>" +
-      '<div><span class="estado ' + (CLASES_ESTADO[estado] || "e-nuevo") + '">' + esc(textoEstado(estado)) + "</span></div>" +
+      '<div><span class="estado ' + (CLASES_ESTADO[estado] || "e-nuevo") + '">' + esc(textoEstado(estado, p.modalidad_entrega)) + "</span></div>" +
       '<div><a class="btn btn-borde btn-sm" href="confirmacion.html?id=' + p.id_pedido + '">Ver detalle</a></div></div>';
   }).join("");
   listaPedidos.querySelectorAll("img").forEach(conRespaldo);

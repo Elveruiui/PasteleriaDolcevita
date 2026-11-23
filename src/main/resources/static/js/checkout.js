@@ -14,6 +14,26 @@ function hoyISO() {
   return d.toISOString().slice(0, 10);
 }
 
+function subtotalProductos() {
+  return productosPedido.reduce((suma, { producto, cantidad }) => suma + producto.precio * cantidad, 0);
+}
+
+function costoDelivery(modalidad, subtotal) {
+  if (modalidad !== "Delivery") return 0;
+  return Math.min(15, Math.max(5, Math.round(subtotal * 5) / 100));
+}
+
+function actualizarTotales() {
+  const elegido = document.querySelector("input[name=modalidad]:checked");
+  const modalidad = elegido ? elegido.value : "Recojo";
+  const subtotal = subtotalProductos();
+  const delivery = costoDelivery(modalidad, subtotal);
+  document.getElementById("resSubtotal").textContent = formatearPrecio(subtotal);
+  document.getElementById("resDelivery").textContent = formatearPrecio(delivery);
+  document.getElementById("filaDelivery").style.display = modalidad === "Delivery" ? "" : "none";
+  document.getElementById("resTotal").textContent = formatearPrecio(subtotal + delivery);
+}
+
 function dibujarResumen() {
   let total = 0;
   const filas = productosPedido.map(({ producto, cantidad }) => {
@@ -31,8 +51,10 @@ function dibujarResumen() {
       </div>`;
   }).join("");
   return `<div class="panel"><h3>Resumen del pedido</h3>${filas}
-    <div class="fila-total"><span>Total</span><span class="monto">${formatearPrecio(total)}</span></div>
-    <p class="ayuda" style="margin-top:.8rem">El precio final lo confirma el sistema al registrar el pedido.</p>
+    <div class="fila-dato"><span>Productos</span><span id="resSubtotal">${formatearPrecio(total)}</span></div>
+    <div class="fila-dato" id="filaDelivery" style="display:none"><span>Delivery</span><span id="resDelivery">${formatearPrecio(0)}</span></div>
+    <div class="fila-total"><span>Total</span><span class="monto" id="resTotal">${formatearPrecio(total)}</span></div>
+    <p class="ayuda" style="margin-top:.8rem">Pago contra entrega. El delivery cuesta el 5% del pedido, con un mínimo de S/ 5.00 y un máximo de S/ 15.00.</p>
     <a class="ayuda" href="carrito.html" style="text-decoration:underline">Volver al carrito</a></div>`;
 }
 
@@ -274,6 +296,7 @@ async function iniciar() {
 
     zonaCheckout.innerHTML = dibujarFormulario() + dibujarResumen();
     zonaCheckout.querySelectorAll(".item img").forEach(conRespaldo);
+    actualizarTotales();
 
     const formulario = document.getElementById("formReserva");
     formulario.addEventListener("submit", registrarPedido);
@@ -284,6 +307,7 @@ async function iniciar() {
       radio.addEventListener("change", () => {
         const esDelivery = document.querySelector("input[name=modalidad]:checked").value === "Delivery";
         document.getElementById("bloqueDireccion").hidden = !esDelivery;
+        actualizarTotales();
         if (esDelivery && !document.getElementById("formNuevaDireccion").hidden) {
           inicializarMapa();
         }

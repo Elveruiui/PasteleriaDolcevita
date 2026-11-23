@@ -7,7 +7,15 @@ const SECCIONES = [
   { id: "usuarios", url: "usuarios.html", icono: "fa-users", texto: "Usuarios", roles: ["ADMIN"] },
 ];
 
-const ESTADOS_PEDIDO = ["PENDIENTE", "CONFIRMADO", "EN_CAMINO", "ENTREGADO", "CANCELADO"];
+const ESTADOS_PEDIDO = ["PENDIENTE", "CONFIRMADO", "LISTO", "EN_CAMINO", "ENTREGADO", "CANCELADO"];
+
+function esRecojo(modalidad) {
+  return String(modalidad || "").toLowerCase().includes("recojo");
+}
+
+function estadosPorModalidad(modalidad) {
+  return esRecojo(modalidad) ? ESTADOS_PEDIDO.filter((e) => e !== "EN_CAMINO") : ESTADOS_PEDIDO;
+}
 const ESTADOS_ENTREGA = ["Asignada", "En camino", "Entregada", "Con incidencia"];
 
 async function llamar(ruta, metodo, cuerpo) {
@@ -118,21 +126,22 @@ function fechaParaBackend(f) {
     "T" + dos(f.getHours()) + ":" + dos(f.getMinutes()) + ":" + dos(f.getSeconds());
 }
 
-function etiquetaEstado(estado) {
+function etiquetaEstado(estado, modalidad) {
+  if (String(estado).toUpperCase() === "LISTO" && esRecojo(modalidad)) return "Listo para recojo";
   const t = String(estado || "").replace(/_/g, " ").toLowerCase();
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
 function claseEstado(estado) {
   const clases = {
-    PENDIENTE: "e-pendiente", CONFIRMADO: "e-confirmado", EN_CAMINO: "e-camino",
+    PENDIENTE: "e-pendiente", CONFIRMADO: "e-confirmado", LISTO: "e-listo", EN_CAMINO: "e-camino",
     ENTREGADO: "e-entregado", CANCELADO: "e-cancelado",
   };
   return clases[String(estado).toUpperCase()] || "e-nuevo";
 }
 
-function insigniaEstadoPedido(estado) {
-  return '<span class="estado ' + claseEstado(estado) + '">' + esc(etiquetaEstado(estado)) + "</span>";
+function insigniaEstadoPedido(estado, modalidad) {
+  return '<span class="estado ' + claseEstado(estado) + '">' + esc(etiquetaEstado(estado, modalidad)) + "</span>";
 }
 
 function insigniaActivo(estado) {
@@ -207,8 +216,8 @@ async function verificarSesionAdmin(seccionActiva) {
       return;
     }
 
-    if (rol.includes("MOTOR") && seccionActiva !== "entregas") {
-      location.href = "entregas.html";
+    if (rol.includes("MOTOR")) {
+      location.href = "../motorizado/index.html";
       return;
     }
 

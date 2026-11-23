@@ -46,7 +46,7 @@ import com.lowagie.text.pdf.PdfWriter;
 @Service
 public class ReporteService {
 
-    private static final String[] ESTADOS_PEDIDO = {"PENDIENTE", "CONFIRMADO", "EN_CAMINO", "ENTREGADO", "CANCELADO"};
+    private static final String[] ESTADOS_PEDIDO = {"PENDIENTE", "CONFIRMADO", "LISTO", "EN_CAMINO", "ENTREGADO", "CANCELADO"};
     private static final String[] ESTADOS_ENTREGA = {"Asignada", "En camino", "Entregada", "Con incidencia"};
     private static final DateTimeFormatter FORMATO_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private static final int ANCHO_COLUMNA = 24 * 256;

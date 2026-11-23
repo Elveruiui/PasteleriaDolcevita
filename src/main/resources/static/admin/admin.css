@@ -27,3 +27,21 @@ button.pestana { font-family: inherit; cursor: pointer; }
 .rejilla-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top: 1.2rem; align-items: start; }
 @media (max-width: 960px) { .rejilla-2 { grid-template-columns: 1fr; } .dos-campos { grid-template-columns: 1fr; } }
 .acciones-cab { display: flex; gap: .7rem; flex-wrap: wrap; }
+.seguimiento { list-style: none; display: flex; margin: 1.6rem 0 .4rem; padding: 0; }
+.paso-seg { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; gap: .6rem; text-align: center; font-size: .85rem; color: var(--gris); }
+.paso-seg + .paso-seg::before { content: ""; position: absolute; top: 17px; right: 50%; width: 100%; height: 4px; background: var(--gris-borde); }
+.paso-seg + .paso-seg.hecho::before, .paso-seg + .paso-seg.actual::before { background: var(--dorado); }
+.paso-seg .punto { position: relative; z-index: 1; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: #fff; border: 3px solid var(--gris-borde); font-weight: 600; }
+.paso-seg.hecho .punto { background: var(--dorado); border-color: var(--dorado); color: #fff; }
+.paso-seg.actual .punto { border-color: var(--dorado); color: var(--dorado-oscuro); box-shadow: 0 0 0 6px rgba(201,145,93,.2); }
+.paso-seg.hecho .etq, .paso-seg.actual .etq { color: var(--chocolate); font-weight: 600; }
+.seguimiento.cancelado { opacity: .5; }
+#nuevo-estado option:disabled { background-color: #e9e3e3; color: #9a8f90; }
+.detalle-admin.ajustado { align-items: stretch; grid-template-columns: 1.2fr 1fr; }
+.detalle-admin.ajustado > div { order: -1; }
+.detalle-admin.ajustado > div { display: flex; flex-direction: column; }
+.detalle-admin.ajustado > div > .panel:last-child { flex: 1; }
+.acciones-estado { display: flex; justify-content: space-between; align-items: center; gap: .8rem; margin-top: 1rem; flex-wrap: wrap; }
+.btn-rojo { background: var(--rojo); border-color: var(--rojo); color: #fff; }
+.btn-rojo:hover { background: #9c2f2f; border-color: #9c2f2f; }
+@media (max-width: 960px) { .detalle-admin.ajustado { grid-template-columns: 1fr; } }

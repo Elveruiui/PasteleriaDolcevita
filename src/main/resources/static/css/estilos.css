@@ -60,6 +60,7 @@ h1, h2, h3 { font-family: var(--fuente-titulos); color: var(--chocolate); line-h
 .e-confirmado, .e-camino { background: var(--azul-fondo); color: var(--azul); }
 .e-entregado, .e-activo { background: var(--verde-fondo); color: var(--verde); }
 .e-cancelado, .e-incidencia { background: var(--rojo-fondo); color: var(--rojo); }
+.e-listo { background: var(--morado-fondo); color: var(--morado); }
 .e-nuevo { background: var(--morado-fondo); color: var(--morado); }
 
 /* ---------- Formularios ---------- */
@@ -208,6 +209,12 @@ textarea { min-height: 90px; resize: vertical; }
 .login-lado p { color: #f5e7e1; font-size: .92rem; }
 .login-form { padding: 3rem; display: flex; flex-direction: column; justify-content: center; }
 .login-form h2 { font-size: 2rem; }
+.login-form[hidden] { display: none; }
+.login-pestanas { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; width: min(1050px, 92%); margin: 2.5rem auto 1.2rem; }
+.login-pestanas button { border: 1px solid var(--gris-borde); background: #fff; padding: 1rem; border-radius: var(--radio); box-shadow: var(--sombra-suave); font-family: var(--fuente-texto); font-size: .95rem; font-weight: 600; color: var(--chocolate-claro); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: .55rem; transition: .25s ease; }
+.login-pestanas button:hover { border-color: var(--dorado); color: var(--vino); }
+.login-pestanas button.activo { background: var(--dorado); border-color: var(--dorado); color: #fff; }
+.login-pestanas + .login-caja { margin-top: 0; }
 .login-form .btn { margin-top: 1.4rem; }
 
 /* =====================================================
@@ -235,6 +242,7 @@ body.admin-body { background: var(--crema); }
 .cab-pag p { color: var(--gris); font-size: .9rem; }
 .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.1rem; margin-bottom: 1.5rem; }
 .kpis.cinco { grid-template-columns: repeat(5, 1fr); }
+.kpis.seis { grid-template-columns: repeat(6, 1fr); }
 .kpi { background: #fff; border-radius: var(--radio); padding: 1.1rem 1.3rem; display: flex; align-items: center; gap: 1rem; box-shadow: var(--sombra-suave); }
 .kpi .ic { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; font-size: 1.2rem; flex: none; }
 .kpi .num { font-family: var(--fuente-titulos); font-size: 1.9rem; font-weight: 700; line-height: 1; }
@@ -244,6 +252,7 @@ body.admin-body { background: var(--crema); }
 .ic-azul { background: var(--azul-fondo); color: var(--azul); }
 .ic-verde { background: var(--verde-fondo); color: var(--verde); }
 .ic-rojo { background: var(--rojo-fondo); color: var(--rojo); }
+.ic-morado { background: var(--morado-fondo); color: var(--morado); }
 .graficos { display: grid; grid-template-columns: 1.7fr 1fr; gap: 1.2rem; }
 .barras { display: flex; align-items: flex-end; gap: .9rem; height: 190px; border-bottom: 1px solid var(--gris-borde); padding-top: .5rem; }
 .barras div { flex: 1; background: linear-gradient(var(--dorado), var(--dorado-oscuro)); border-radius: 8px 8px 0 0; }
@@ -294,7 +303,7 @@ table.tabla { width: 100%; border-collapse: collapse; font-size: .85rem; }
   .lateral { position: static; height: auto; display: flex; flex-wrap: wrap; gap: .3rem; padding: .8rem; }
   .lateral .marca { width: 100%; margin-bottom: .6rem; padding-bottom: .8rem; }
   .lateral .salir { margin: 0; border: 0; padding: 0; }
-  .kpis, .kpis.cinco { grid-template-columns: repeat(2, 1fr); }
+  .kpis, .kpis.cinco, .kpis.seis { grid-template-columns: repeat(2, 1fr); }
   .lista-pedidos .pedido { grid-template-columns: 1fr 1fr; }
   .cuerpo { padding: 1.2rem; }
 }

@@ -1,0 +1,117 @@
+.moto-body { background: var(--crema); min-height: 100vh; }
+.moto-barra { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .9rem 1rem; background: var(--vino); color: #fff; box-shadow: 0 4px 14px rgba(61,43,31,.18); }
+.moto-marca { display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+.moto-marca b { font-family: var(--fuente-titulos); font-size: 1.25rem; letter-spacing: .06em; }
+.moto-marca small { font-size: .62rem; letter-spacing: .22em; text-transform: uppercase; color: #f1d9df; }
+.moto-icono { width: 40px; height: 40px; border: 0; border-radius: 12px; background: rgba(255,255,255,.12); color: #fff; font-size: 1rem; cursor: pointer; display: grid; place-items: center; }
+.moto-icono:hover { background: rgba(255,255,255,.22); }
+.moto-atras { visibility: hidden; }
+.ver-panel .moto-atras { visibility: visible; }
+
+.moto-app { width: 100%; max-width: 1200px; margin: 0 auto; }
+.moto-lista { padding: 1rem; }
+.moto-panel { display: none; padding: 1rem 1rem 6.5rem; }
+.ver-panel .moto-lista { display: none; }
+.ver-panel .moto-panel { display: block; }
+
+.moto-saludo { font-size: .9rem; color: var(--gris); margin-bottom: .8rem; }
+.moto-saludo strong { color: var(--chocolate); }
+.moto-tabs { display: grid; grid-template-columns: 1fr 1fr; background: #fff; border-radius: 14px; padding: .3rem; box-shadow: var(--sombra-suave); margin-bottom: 1rem; }
+.moto-tabs button { border: 0; background: transparent; padding: .7rem; border-radius: 10px; font-family: var(--fuente-texto); font-weight: 600; font-size: .9rem; color: var(--gris); cursor: pointer; }
+.moto-tabs button.activo { background: var(--vino); color: #fff; }
+.moto-fecha { font-weight: 600; color: var(--chocolate); margin-bottom: .8rem; display: flex; align-items: center; gap: .5rem; }
+.moto-fecha i { color: var(--vino); }
+.moto-tarjetas { display: flex; flex-direction: column; gap: .8rem; }
+.moto-mensaje { text-align: center; color: var(--gris); padding: 2rem 1rem; background: #fff; border-radius: 14px; }
+
+.moto-tarjeta { width: 100%; text-align: left; border: 1px solid var(--gris-borde); border-left: 5px solid var(--gris-borde); background: #fff; border-radius: 14px; padding: .9rem 1rem; font-family: var(--fuente-texto); color: var(--chocolate); cursor: pointer; display: flex; flex-direction: column; gap: .2rem; transition: .2s ease; }
+.moto-tarjeta:hover { box-shadow: var(--sombra-suave); }
+.moto-tarjeta.seleccionada { outline: 2px solid var(--vino); }
+.moto-tarjeta .fila { display: flex; justify-content: space-between; align-items: center; gap: .6rem; }
+.moto-tarjeta strong { font-size: 1rem; }
+.moto-tarjeta small { color: var(--gris); font-size: .8rem; }
+.moto-tarjeta b { font-size: .95rem; margin-top: .2rem; }
+.moto-tarjeta.t-prep { border-left-color: #b9aeb0; }
+.moto-tarjeta.t-lista { border-left-color: var(--ambar); background: #fffaf0; }
+.moto-tarjeta.t-camino { border-left-color: var(--azul); background: #f5f9fe; }
+.moto-tarjeta.t-entregada { border-left-color: var(--verde); }
+.moto-tarjeta.t-incidencia { border-left-color: var(--rojo); }
+
+.moto-estado { font-size: .72rem; font-weight: 600; padding: .25rem .7rem; border-radius: var(--pill); white-space: nowrap; }
+.moto-estado.t-prep { background: var(--gris-claro); color: var(--gris); }
+.moto-estado.t-lista { background: var(--ambar-fondo); color: var(--ambar); }
+.moto-estado.t-camino { background: var(--azul-fondo); color: var(--azul); }
+.moto-estado.t-entregada { background: var(--verde-fondo); color: var(--verde); }
+.moto-estado.t-incidencia { background: var(--rojo-fondo); color: var(--rojo); }
+
+.moto-vacio { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .8rem; color: var(--gris); text-align: center; min-height: 320px; background: #fff; border-radius: 18px; }
+.moto-vacio i { font-size: 2.4rem; color: var(--rosa-oscuro); }
+
+.moto-cab { display: flex; justify-content: space-between; align-items: center; gap: .8rem; }
+.moto-cab h2 { font-size: 1.35rem; }
+.moto-sub { color: var(--gris); font-size: .85rem; margin: .2rem 0 1rem; }
+.moto-bloque { background: #fff; border-radius: 16px; padding: 1rem 1.1rem; margin-bottom: .8rem; box-shadow: var(--sombra-suave); }
+.moto-bloque h3 { font-size: 1rem; color: var(--vino); margin-bottom: .6rem; }
+.moto-dato { display: flex; align-items: center; justify-content: space-between; gap: .8rem; padding: .3rem 0; font-size: .92rem; }
+.moto-dato span { display: flex; align-items: center; gap: .55rem; }
+.moto-dato i { color: var(--vino); width: 16px; text-align: center; }
+.moto-btn-mini { display: inline-flex; align-items: center; gap: .4rem; padding: .45rem .9rem; border-radius: 10px; background: var(--vino); color: #fff; font-size: .8rem; font-weight: 600; }
+.moto-btn-borde { display: flex; align-items: center; justify-content: center; gap: .5rem; width: 100%; margin-top: .7rem; padding: .6rem; border-radius: 10px; border: 1px solid var(--vino); color: var(--vino); font-size: .85rem; font-weight: 600; background: #fff; }
+.moto-direccion { font-size: .95rem; }
+.moto-direccion small { display: block; color: var(--gris); font-size: .8rem; margin-top: .2rem; }
+.moto-alias { display: inline-block; background: var(--rosa-claro); color: var(--vino); font-size: .72rem; font-weight: 600; padding: .1rem .55rem; border-radius: var(--pill); margin-right: .35rem; }
+.moto-producto { display: flex; align-items: center; gap: .8rem; padding: .35rem 0; }
+.moto-producto img { width: 46px; height: 46px; border-radius: 10px; object-fit: cover; }
+.moto-producto div { display: flex; flex-direction: column; font-size: .9rem; }
+.moto-producto small { color: var(--gris); font-size: .78rem; }
+.moto-notas { background: #fdf3f5; border-left: 4px solid var(--rosa-oscuro); }
+.moto-cobro { display: flex; justify-content: space-between; align-items: center; }
+.moto-cobro strong { font-size: 1.3rem; color: var(--chocolate); white-space: nowrap; }
+.moto-cobro small { display: block; color: var(--gris); font-size: .78rem; }
+.moto-incidencia { background: var(--rojo-fondo); color: var(--rojo); }
+.moto-incidencia h3 { color: var(--rojo); }
+
+.moto-acciones { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; flex-direction: column; gap: .6rem; padding: .9rem 1rem 1.1rem; background: #fff; box-shadow: 0 -6px 18px rgba(61,43,31,.1); }
+.moto-boton { width: 100%; padding: .95rem 1rem; border-radius: 12px; border: 1px solid var(--vino); background: var(--vino); color: #fff; font-family: var(--fuente-texto); font-weight: 600; font-size: .95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: .55rem; }
+.moto-boton:disabled { background: var(--gris-claro); border-color: var(--gris-borde); color: var(--gris); cursor: not-allowed; }
+.moto-boton.borde { background: #fff; color: var(--vino); }
+.moto-boton.rojo { background: #fff; color: var(--rojo); border-color: var(--rojo); }
+
+.moto-linea { list-style: none; margin: .4rem 0 1.2rem; padding: 0; }
+.moto-linea li { position: relative; display: flex; gap: .9rem; padding-bottom: 1.3rem; }
+.moto-linea li:last-child { padding-bottom: 0; }
+.moto-linea li::before { content: ""; position: absolute; left: 9px; top: 22px; bottom: 0; width: 2px; background: var(--gris-borde); }
+.moto-linea li:last-child::before { display: none; }
+.moto-linea li.hecho::before { background: var(--verde); }
+.moto-punto { position: relative; z-index: 1; flex: 0 0 20px; height: 20px; border-radius: 50%; background: #fff; border: 3px solid var(--gris-borde); margin-top: 2px; }
+.moto-linea li.hecho .moto-punto { background: var(--verde); border-color: var(--verde); }
+.moto-linea li.actual .moto-punto { border-color: var(--vino); background: var(--vino); box-shadow: 0 0 0 5px rgba(114,47,69,.18); }
+.moto-linea b { display: block; font-size: .95rem; }
+.moto-linea li:not(.hecho):not(.actual) b { color: var(--gris); font-weight: 500; }
+.moto-linea small { color: var(--gris); font-size: .8rem; }
+.moto-campo label { display: block; font-weight: 600; font-size: .85rem; margin-bottom: .4rem; }
+.moto-campo textarea { width: 100%; min-height: 90px; border: 1px solid var(--gris-borde); border-radius: 12px; padding: .75rem .9rem; font-family: var(--fuente-texto); font-size: .9rem; resize: vertical; }
+.moto-contador { display: block; text-align: right; font-size: .75rem; color: var(--gris); margin-top: .2rem; }
+.moto-error { background: var(--rojo-fondo); color: var(--rojo); border-radius: 10px; padding: .6rem .8rem; font-size: .85rem; margin-top: .8rem; }
+.moto-opciones { display: flex; flex-direction: column; gap: .5rem; margin-bottom: 1rem; }
+.moto-opciones label { margin: 0; font-weight: 500; display: flex; align-items: center; gap: .6rem; padding: .7rem .9rem; border: 1px solid var(--gris-borde); border-radius: 12px; background: #fff; font-size: .9rem; cursor: pointer; }
+.moto-opciones input { accent-color: var(--vino); }
+.moto-opciones label:has(input:checked) { border-color: var(--vino); background: #fdf3f5; }
+
+.moto-exito { text-align: center; padding-top: 1rem; }
+.moto-exito .check { width: 78px; height: 78px; margin: 0 auto 1rem; border-radius: 50%; background: var(--verde); color: #fff; display: grid; place-items: center; font-size: 2rem; }
+.moto-exito h2 { color: var(--vino); font-size: 1.4rem; margin-bottom: .4rem; }
+.moto-exito .moto-bloque { text-align: left; margin-top: 1rem; }
+
+.moto-toast { position: fixed; left: 50%; bottom: 7rem; transform: translateX(-50%); z-index: 50; background: var(--chocolate); color: #fff; padding: .75rem 1.2rem; border-radius: 12px; font-size: .9rem; box-shadow: var(--sombra); max-width: 90%; text-align: center; }
+.moto-toast.error { background: var(--rojo); }
+
+@media (min-width: 900px) {
+  .moto-atras, .ver-panel .moto-atras { visibility: hidden; }
+  .moto-app { display: grid; grid-template-columns: 380px 1fr; gap: 1.5rem; padding: 1.5rem; align-items: start; }
+  .moto-lista { padding: 0; position: sticky; top: 88px; max-height: calc(100vh - 110px); overflow-y: auto; }
+  .moto-panel, .ver-panel .moto-panel { display: block; padding: 0; }
+  .ver-panel .moto-lista { display: block; }
+  .moto-acciones { position: static; background: transparent; box-shadow: none; padding: .4rem 0 0; flex-direction: row; }
+  .moto-toast { bottom: 2rem; }
+}

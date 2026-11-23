@@ -31,7 +31,7 @@ async function actualizarBarraSesion() {
   if (rol.includes("ADMIN")) {
     enlacePanel = '<a href="admin/index.html" style="margin-right:1.2rem;font-weight:600;color:var(--vino)"><i class="fa-solid fa-gauge-high"></i> Panel Admin</a>';
   } else if (rol.includes("MOTOR")) {
-    enlacePanel = '<a href="admin/entregas.html" style="margin-right:1.2rem;font-weight:600;color:var(--vino)"><i class="fa-solid fa-motorcycle"></i> Panel Entregas</a>';
+    enlacePanel = '<a href="motorizado/index.html" style="margin-right:1.2rem;font-weight:600;color:var(--vino)"><i class="fa-solid fa-motorcycle"></i> Mis entregas</a>';
   }
 
   if (contenedorTop) {

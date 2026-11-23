@@ -1,7 +1,9 @@
 package com.example.service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,6 +31,16 @@ public class PedidoService {
 
     @Autowired
     private DetallePedidoRepository detallePedidoRepository;
+
+    private static final List<String> ESTADOS_DELIVERY = Arrays.asList("PENDIENTE", "CONFIRMADO", "LISTO", "EN_CAMINO", "ENTREGADO", "CANCELADO");
+
+    private static final BigDecimal PORCENTAJE_DELIVERY = new BigDecimal("0.05");
+
+    private static final BigDecimal DELIVERY_MINIMO = new BigDecimal("5.00");
+
+    private static final BigDecimal DELIVERY_MAXIMO = new BigDecimal("15.00");
+
+    private static final List<String> ESTADOS_RECOJO = Arrays.asList("PENDIENTE", "CONFIRMADO", "LISTO", "ENTREGADO", "CANCELADO");
 
 	    public List<Pedido> listarAll() {
 	        return pedidoRepository.findAll();
@@ -90,7 +102,9 @@ public class PedidoService {
 	            totalCalculado = totalCalculado.add(subtotal);
 	        }
 
-	        pedido.setTotal(totalCalculado);
+	        BigDecimal costoDelivery = calcularCostoDelivery(pedido.getModalidad_entrega(), totalCalculado);
+	        pedido.setCosto_delivery(costoDelivery);
+	        pedido.setTotal(totalCalculado.add(costoDelivery));
 	        return pedidoRepository.save(pedido);
 	    }
 
@@ -102,6 +116,25 @@ public class PedidoService {
 
 	        String estadoActual = pedido.getEstado();
 	        String nuevoEstadoUpper = nuevoEstado.toUpperCase();
+
+	        List<String> permitidos = estadosPermitidos(pedido.getModalidad_entrega());
+	        if (!permitidos.contains(nuevoEstadoUpper)) {
+	            throw new Exception("El estado " + nuevoEstadoUpper + " no es válido para pedidos con modalidad " + pedido.getModalidad_entrega() + ".");
+	        }
+
+	        String actualUpper = estadoActual == null ? "" : estadoActual.toUpperCase();
+	        if (!actualUpper.equals(nuevoEstadoUpper)) {
+	            if ("CANCELADO".equals(actualUpper)) {
+	                throw new Exception("Un pedido cancelado ya no se puede reactivar.");
+	            }
+	            if ("ENTREGADO".equals(actualUpper)) {
+	                throw new Exception("Un pedido entregado ya no se puede modificar.");
+	            }
+	            int posicionActual = permitidos.indexOf(actualUpper);
+	            if (!"CANCELADO".equals(nuevoEstadoUpper) && posicionActual >= 0 && permitidos.indexOf(nuevoEstadoUpper) < posicionActual) {
+	                throw new Exception("No se puede regresar el pedido de " + actualUpper + " a " + nuevoEstadoUpper + ".");
+	            }
+	        }
 
 	     
 	        if ("CANCELADO".equals(nuevoEstadoUpper) && !"CANCELADO".equalsIgnoreCase(estadoActual)) {
@@ -169,7 +202,9 @@ public class PedidoService {
 	                totalCalculado = totalCalculado.add(subtotal);
 	            }
 
-	            pedidoExistente.setTotal(totalCalculado);
+	            BigDecimal costoDelivery = calcularCostoDelivery(pedidoExistente.getModalidad_entrega(), totalCalculado);
+	            pedidoExistente.setCosto_delivery(costoDelivery);
+	            pedidoExistente.setTotal(totalCalculado.add(costoDelivery));
 	        }
 
 	        return pedidoRepository.save(pedidoExistente);
@@ -192,6 +227,41 @@ public class PedidoService {
 	    }
 
 	    
+	    @Transactional
+	    public Pedido actualizarEstadoSegunRol(Long id, String nuevoEstado, boolean esMotorizado) throws Exception {
+	        Pedido pedido = pedidoRepository.findById(id)
+	                .orElseThrow(() -> new Exception("Pedido no encontrado con ID: " + id));
+	        if (!esMotorizado && soloMotorizado(pedido.getModalidad_entrega(), nuevoEstado)) {
+	            throw new Exception("En los pedidos delivery, solo el motorizado puede marcar el estado " + nuevoEstado.toUpperCase() + ".");
+	        }
+	        return actualizarEstado(id, nuevoEstado);
+	    }
+
+	    public static BigDecimal calcularCostoDelivery(String modalidad, BigDecimal subtotal) {
+	        if (modalidad == null || subtotal == null || !modalidad.toLowerCase().contains("delivery")) {
+	            return BigDecimal.ZERO.setScale(2);
+	        }
+	        BigDecimal costo = subtotal.multiply(PORCENTAJE_DELIVERY).setScale(2, RoundingMode.HALF_UP);
+	        if (costo.compareTo(DELIVERY_MINIMO) < 0) {
+	            return DELIVERY_MINIMO;
+	        }
+	        if (costo.compareTo(DELIVERY_MAXIMO) > 0) {
+	            return DELIVERY_MAXIMO;
+	        }
+	        return costo;
+	    }
+
+	    public static boolean soloMotorizado(String modalidad, String estado) {
+	        boolean recojo = modalidad != null && modalidad.toLowerCase().contains("recojo");
+	        String valor = estado == null ? "" : estado.toUpperCase();
+	        return !recojo && ("EN_CAMINO".equals(valor) || "ENTREGADO".equals(valor));
+	    }
+
+	    public static List<String> estadosPermitidos(String modalidad) {
+	        boolean recojo = modalidad != null && modalidad.toLowerCase().contains("recojo");
+	        return recojo ? ESTADOS_RECOJO : ESTADOS_DELIVERY;
+	    }
+
 	    private void devolverStockProductos(Pedido pedido) {
 	        if (pedido.getDetalles() != null) {
 	            for (DetallePedido detalle : pedido.getDetalles()) {

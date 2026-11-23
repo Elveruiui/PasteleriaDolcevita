@@ -56,7 +56,7 @@ function dibujar() {
     "<td>" + fechaHora(p.fecha_entrega) + "</td>" +
     "<td>" + esc(p.modalidad_entrega || "—") + "</td>" +
     "<td>" + precio(p.total) + "</td>" +
-    "<td>" + insigniaEstadoPedido(p.estado) + "</td>" +
+    "<td>" + insigniaEstadoPedido(p.estado, p.modalidad_entrega) + "</td>" +
     '<td><div class="acciones"><a class="ic-btn" href="pedido.html?id=' + p.id_pedido + '" title="Ver y actualizar"><i class="fa-solid fa-eye"></i></a></div></td></tr>').join("");
 }
 
