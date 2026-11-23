@@ -7,6 +7,8 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,9 +26,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.model.Usuario;
 import com.example.service.UsuarioService;
 
+import io.micrometer.core.instrument.Metrics;
+
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     private static final String ATRIBUTO_USUARIO = "USUARIO_SESION_ID";
 
@@ -40,8 +46,12 @@ public class AuthController {
             String contrasena = credenciales.get("contrasena");
             Usuario usuario = usuarioService.autenticar(correo, contrasena);
             iniciarSesionSpring(usuario, request);
+            Metrics.counter("dolcevita.login.exitosos").increment();
+            log.info("Inicio de sesion correcto: {} ({})", correo, usuario.getRol() != null ? usuario.getRol().getNombre_rol() : "sin rol");
             return ResponseEntity.ok(usuario);
         } catch (Exception e) {
+            Metrics.counter("dolcevita.login.fallidos").increment();
+            log.warn("Intento de inicio de sesion fallido: {}", credenciales.get("correo"));
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         }
     }
@@ -50,6 +60,7 @@ public class AuthController {
     public ResponseEntity<?> registro(@RequestBody Usuario datos, HttpServletRequest request) {
         try {
             Usuario creado = usuarioService.registrarCliente(datos);
+            log.info("Nuevo cliente registrado: {}", creado.getCorreo());
             iniciarSesionSpring(creado, request);
             return ResponseEntity.status(HttpStatus.CREATED).body(creado);
         } catch (Exception e) {

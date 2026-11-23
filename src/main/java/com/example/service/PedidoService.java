@@ -9,6 +9,8 @@ import java.util.Optional;
 
 import javax.transaction.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,8 +21,13 @@ import com.example.repository.DetallePedidoRepository;
 import com.example.repository.PedidoRepository;
 import com.example.repository.ProductoRepository;
 
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Timer;
+
 @Service
 public class PedidoService {
+
+    private static final Logger log = LoggerFactory.getLogger(PedidoService.class);
 	
 
 	@Autowired
@@ -65,6 +72,7 @@ public class PedidoService {
 	            throw new Exception("El pedido debe incluir al menos un producto en el detalle.");
 	        }
 
+	        Timer.Sample muestra = Timer.start(Metrics.globalRegistry);
 	        pedido.setFecha_pedido(LocalDateTime.now());
 	        pedido.setEstado("PENDIENTE");
 
@@ -81,6 +89,9 @@ public class PedidoService {
 
 	            
 	            if (productoBD.getStock() < detalle.getCantidad()) {
+	                log.warn("Pedido rechazado por stock insuficiente: producto={}, solicitado={}, disponible={}",
+	                        productoBD.getNombre(), detalle.getCantidad(), productoBD.getStock());
+	                Metrics.counter("dolcevita.pedidos.rechazados").increment();
 	                throw new Exception("Stock insuficiente para el producto: " + productoBD.getNombre()
 	                        + " (Stock disponible: " + productoBD.getStock() + ")");
 	            }
@@ -105,7 +116,14 @@ public class PedidoService {
 	        BigDecimal costoDelivery = calcularCostoDelivery(pedido.getModalidad_entrega(), totalCalculado);
 	        pedido.setCosto_delivery(costoDelivery);
 	        pedido.setTotal(totalCalculado.add(costoDelivery));
-	        return pedidoRepository.save(pedido);
+	        Pedido registrado = pedidoRepository.save(pedido);
+	        muestra.stop(Metrics.timer("dolcevita.pedidos.tiempo_registro"));
+	        Metrics.counter("dolcevita.pedidos.creados", "modalidad", String.valueOf(pedido.getModalidad_entrega())).increment();
+	        log.info("Pedido {} registrado: usuario={}, modalidad={}, productos={}, total=S/ {}",
+	                registrado != null ? registrado.getId_pedido() : null,
+	                pedido.getUsuario() != null ? pedido.getUsuario().getId_usuario() : null,
+	                pedido.getModalidad_entrega(), pedido.getDetalles().size(), pedido.getTotal());
+	        return registrado;
 	    }
 
 	   
@@ -142,6 +160,14 @@ public class PedidoService {
 	        }
 
 	        pedido.setEstado(nuevoEstadoUpper);
+	        if (!nuevoEstadoUpper.equalsIgnoreCase(estadoActual)) {
+	            log.info("Pedido {} cambio de estado: {} -> {}", id, estadoActual, nuevoEstadoUpper);
+	            if ("CANCELADO".equals(nuevoEstadoUpper)) {
+	                Metrics.counter("dolcevita.pedidos.cancelados").increment();
+	            } else if ("ENTREGADO".equals(nuevoEstadoUpper)) {
+	                Metrics.counter("dolcevita.pedidos.entregados").increment();
+	            }
+	        }
 	        return pedidoRepository.save(pedido);
 	    }
 
@@ -220,6 +246,7 @@ public class PedidoService {
 	            if (!"CANCELADO".equalsIgnoreCase(pedido.getEstado())) {
 	                devolverStockProductos(pedido);
 	            }
+	            log.warn("Pedido {} eliminado (estado: {})", id, pedido.getEstado());
 	            pedidoRepository.deleteById(id);
 	            return true;
 	        }
@@ -232,6 +259,7 @@ public class PedidoService {
 	        Pedido pedido = pedidoRepository.findById(id)
 	                .orElseThrow(() -> new Exception("Pedido no encontrado con ID: " + id));
 	        if (!esMotorizado && soloMotorizado(pedido.getModalidad_entrega(), nuevoEstado)) {
+	            log.warn("Intento rechazado de marcar el pedido {} como {} sin rol de motorizado", id, nuevoEstado.toUpperCase());
 	            throw new Exception("En los pedidos delivery, solo el motorizado puede marcar el estado " + nuevoEstado.toUpperCase() + ".");
 	        }
 	        return actualizarEstado(id, nuevoEstado);

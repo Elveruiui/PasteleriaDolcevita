@@ -34,6 +34,8 @@ public class SecurityConfig {
                 ).permitAll()
 
                 .antMatchers("/auth/**").permitAll()
+                .antMatchers("/actuator/health/**", "/actuator/info").permitAll()
+                .antMatchers("/actuator/**").hasRole("ADMINISTRADOR")
 
                 .antMatchers(HttpMethod.GET,
                     "/producto/listarProductos",

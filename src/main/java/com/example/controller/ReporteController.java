@@ -2,6 +2,8 @@ package com.example.controller;
 
 import java.time.LocalDate;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,8 @@ import com.example.service.ReporteService;
 @RequestMapping("/reporte")
 public class ReporteController {
 
+    private static final Logger log = LoggerFactory.getLogger(ReporteController.class);
+
     private static final MediaType EXCEL =
             MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 
@@ -30,6 +34,7 @@ public class ReporteController {
         try {
             return descargarExcel(reporteService.generarReportePedidos(), "reporte-pedidos");
         } catch (Exception e) {
+            log.error("Error al generar el reporte de pedidos", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al generar el reporte de pedidos");
         }
     }
@@ -39,6 +44,7 @@ public class ReporteController {
         try {
             return descargarExcel(reporteService.generarReporteEntregas(), "reporte-entregas");
         } catch (Exception e) {
+            log.error("Error al generar el reporte de entregas", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al generar el reporte de entregas");
         }
     }
@@ -48,6 +54,7 @@ public class ReporteController {
         try {
             return descargarExcel(reporteService.generarReporteProductos(), "reporte-productos");
         } catch (Exception e) {
+            log.error("Error al generar el reporte de productos", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al generar el reporte de productos");
         }
     }
@@ -57,6 +64,7 @@ public class ReporteController {
         try {
             return descargarExcel(reporteService.generarReporteCategorias(), "reporte-categorias");
         } catch (Exception e) {
+            log.error("Error al generar el reporte de categorías", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al generar el reporte de categorías");
         }
     }
@@ -66,6 +74,7 @@ public class ReporteController {
         try {
             return descargarExcel(reporteService.generarReporteUsuarios(), "reporte-usuarios");
         } catch (Exception e) {
+            log.error("Error al generar el reporte de usuarios", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al generar el reporte de usuarios");
         }
     }
@@ -75,6 +84,7 @@ public class ReporteController {
         try {
             return descargarPdf(reporteService.generarPdfPedidos(), "reporte-pedidos");
         } catch (Exception e) {
+            log.error("Error al generar el PDF de pedidos", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al generar el PDF de pedidos");
         }
     }
@@ -84,6 +94,7 @@ public class ReporteController {
         try {
             return descargarPdf(reporteService.generarPdfEntregas(), "reporte-entregas");
         } catch (Exception e) {
+            log.error("Error al generar el PDF de entregas", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al generar el PDF de entregas");
         }
     }
@@ -93,6 +104,7 @@ public class ReporteController {
         try {
             return descargarPdf(reporteService.generarPdfProductos(), "reporte-productos");
         } catch (Exception e) {
+            log.error("Error al generar el PDF de productos", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al generar el PDF de productos");
         }
     }
@@ -102,6 +114,7 @@ public class ReporteController {
         try {
             return descargarPdf(reporteService.generarPdfCategorias(), "reporte-categorias");
         } catch (Exception e) {
+            log.error("Error al generar el PDF de categorías", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al generar el PDF de categorías");
         }
     }
@@ -111,12 +124,14 @@ public class ReporteController {
         try {
             return descargarPdf(reporteService.generarPdfUsuarios(), "reporte-usuarios");
         } catch (Exception e) {
+            log.error("Error al generar el PDF de usuarios", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al generar el PDF de usuarios");
         }
     }
 
     private ResponseEntity<byte[]> descargarExcel(byte[] contenido, String nombreBase) {
         String nombreArchivo = nombreBase + "-" + LocalDate.now() + ".xlsx";
+        log.info("Reporte generado: {} ({} KB)", nombreArchivo, contenido.length / 1024);
         return ResponseEntity.ok()
                 .contentType(EXCEL)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + nombreArchivo + "\"")
@@ -125,6 +140,7 @@ public class ReporteController {
 
     private ResponseEntity<byte[]> descargarPdf(byte[] contenido, String nombreBase) {
         String nombreArchivo = nombreBase + "-" + LocalDate.now() + ".pdf";
+        log.info("Reporte generado: {} ({} KB)", nombreArchivo, contenido.length / 1024);
         return ResponseEntity.ok()
                 .contentType(PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + nombreArchivo + "\"")

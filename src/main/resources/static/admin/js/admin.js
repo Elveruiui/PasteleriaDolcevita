@@ -5,6 +5,7 @@ const SECCIONES = [
   { id: "categorias", url: "categorias.html", icono: "fa-tags", texto: "Categorías", roles: ["ADMIN"] },
   { id: "entregas", url: "entregas.html", icono: "fa-motorcycle", texto: "Entregas", roles: ["ADMIN", "MOTOR"] },
   { id: "usuarios", url: "usuarios.html", icono: "fa-users", texto: "Usuarios", roles: ["ADMIN"] },
+  { id: "monitoreo", url: "monitoreo.html", icono: "fa-heart-pulse", texto: "Monitoreo", roles: ["ADMIN"] },
 ];
 
 const ESTADOS_PEDIDO = ["PENDIENTE", "CONFIRMADO", "LISTO", "EN_CAMINO", "ENTREGADO", "CANCELADO"];

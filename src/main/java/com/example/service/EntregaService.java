@@ -7,6 +7,8 @@ import java.util.Optional;
 
 import javax.transaction.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,8 +17,12 @@ import com.example.model.Pedido;
 import com.example.repository.EntregaRepository;
 import com.example.repository.PedidoRepository;
 
+import io.micrometer.core.instrument.Metrics;
+
 @Service
 public class EntregaService {
+
+    private static final Logger log = LoggerFactory.getLogger(EntregaService.class);
 
     @Autowired
     private EntregaRepository entregaRepository;
@@ -59,7 +65,13 @@ public class EntregaService {
         if (entrega.getCosto_delivery() == null) {
             entrega.setCosto_delivery(BigDecimal.ZERO);
         }
-        return entregaRepository.save(entrega);
+        Entrega asignada = entregaRepository.save(entrega);
+        Metrics.counter("dolcevita.entregas.asignadas").increment();
+        log.info("Entrega asignada: pedido={}, motorizado={}, costo delivery=S/ {}",
+                entrega.getPedido() != null ? entrega.getPedido().getId_pedido() : null,
+                entrega.getMotorizado() != null ? entrega.getMotorizado().getId_usuario() : null,
+                entrega.getCosto_delivery());
+        return asignada;
     }
 
     public Entrega actualizar(Long id, Entrega detalles) {
@@ -116,11 +128,23 @@ public class EntregaService {
             entrega.setObservacion(texto);
         }
         entrega.setEstado(nuevoEstado);
+        Long idPedido = pedido != null ? pedido.getId_pedido() : null;
+        if (nuevoEstado == EN_CAMINO) {
+            Metrics.counter("dolcevita.entregas.iniciadas").increment();
+            log.info("Entrega {} en camino: pedido={}, motorizado={}", id, idPedido, correoMotorizado);
+        } else if (nuevoEstado == ENTREGADA) {
+            Metrics.counter("dolcevita.entregas.completadas").increment();
+            log.info("Entrega {} completada: pedido={}, motorizado={}", id, idPedido, correoMotorizado);
+        } else {
+            Metrics.counter("dolcevita.entregas.incidencias").increment();
+            log.warn("Incidencia en la entrega {}: pedido={}, motorizado={}, detalle={}", id, idPedido, correoMotorizado, texto);
+        }
         return entregaRepository.save(entrega);
     }
 
     public boolean eliminar(Long id) {
         if (entregaRepository.existsById(id)) {
+            log.warn("Entrega {} eliminada por el administrador", id);
             entregaRepository.deleteById(id);
             return true;
         }
