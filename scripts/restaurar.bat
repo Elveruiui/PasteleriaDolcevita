@@ -4,7 +4,7 @@ chcp 65001 >nul
 cd /d "%~dp0.."
 
 set "USUARIO=root"
-set "CLAVE=root123"
+set "CLAVE=1234"
 set "CARPETA=%CD%\backups"
 set "MYSQL_BIN="
 
