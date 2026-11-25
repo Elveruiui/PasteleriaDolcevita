@@ -24,6 +24,9 @@ import com.example.repository.ProductoRepository;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Timer;
 
+/**
+ * Servicio con la lógica de negocio de los pedidos: registro, control de stock, cálculo del costo de delivery y cambios de estado según la modalidad y el rol del usuario.
+ */
 @Service
 public class PedidoService {
 
@@ -49,23 +52,48 @@ public class PedidoService {
 
     private static final List<String> ESTADOS_RECOJO = Arrays.asList("PENDIENTE", "CONFIRMADO", "LISTO", "ENTREGADO", "CANCELADO");
 
+	    /**
+	     * Lista todos los pedidos registrados.
+	     * @return lista de pedidos
+	     */
 	    public List<Pedido> listarAll() {
 	        return pedidoRepository.findAll();
 	    }
 
+	    /**
+	     * Lista los pedidos que se encuentran en un estado determinado.
+	     * @param estado estado buscado, por ejemplo PENDIENTE o LISTO
+	     * @return pedidos en ese estado
+	     */
 	    public List<Pedido> listarPorEstado(String estado) {
 	        return pedidoRepository.findByEstadoIgnoreCase(estado);
 	    }
 
+	    /**
+	     * Lista los pedidos realizados por un cliente.
+	     * @param idUsuario identificador del cliente
+	     * @return pedidos del cliente
+	     */
 	    public List<Pedido> listarPorUsuario(Long idUsuario) {
 	        return pedidoRepository.listarPorUsuario(idUsuario);
 	    }
 
+	    /**
+	     * Busca un pedido por su identificador.
+	     * @param id identificador del pedido
+	     * @return el pedido encontrado
+	     */
 	    public Pedido listarID(Long id) {
 	        return pedidoRepository.findById(id).orElse(null);
 	    }
 
 
+	    /**
+	     * Registra un nuevo pedido. Valida las cantidades y el stock, descuenta el stock de cada producto, calcula los subtotales, el costo de delivery y el total, y deja el pedido en estado PENDIENTE.
+	     * @param pedido pedido con sus detalles
+	     * @return el pedido guardado
+	     * @throws Exception si el pedido no tiene productos, una cantidad no es válida o no hay stock suficiente
+	     */
 	    @Transactional
 	    public Pedido guardar(Pedido pedido) throws Exception {
 	        if (pedido.getDetalles() == null || pedido.getDetalles().isEmpty()) {
@@ -127,6 +155,13 @@ public class PedidoService {
 	    }
 
 	   
+	    /**
+	     * Cambia el estado de un pedido respetando el orden de estados de su modalidad. No permite regresar a un estado anterior ni modificar pedidos cancelados o entregados. Al cancelar, devuelve el stock de los productos.
+	     * @param id identificador del pedido
+	     * @param nuevoEstado estado al que se desea pasar
+	     * @return el pedido actualizado
+	     * @throws Exception si el pedido no existe o el cambio no está permitido
+	     */
 	    @Transactional
 	    public Pedido actualizarEstado(Long id, String nuevoEstado) throws Exception {
 	        Pedido pedido = pedidoRepository.findById(id)
@@ -172,6 +207,13 @@ public class PedidoService {
 	    }
 
 	    
+	    /**
+	     * Actualiza los productos y la fecha de entrega de un pedido, recalculando el subtotal, el costo de delivery y el total.
+	     * @param id identificador del pedido
+	     * @param detallesNuevos pedido con los nuevos detalles
+	     * @return el pedido actualizado
+	     * @throws Exception si el pedido no existe o los datos no son válidos
+	     */
 	    @Transactional
 	    public Pedido actualizarDetallesYFecha(Long id, Pedido detallesNuevos) throws Exception {
 	        Pedido pedidoExistente = pedidoRepository.findById(id)
@@ -237,6 +279,11 @@ public class PedidoService {
 	    }
 
 	    
+	    /**
+	     * Elimina un pedido.
+	     * @param id identificador del pedido
+	     * @return true si se eliminó, false si no existía
+	     */
 	    @Transactional
 	    public boolean eliminar(Long id) {
 	        Optional<Pedido> optional = pedidoRepository.findById(id);
@@ -254,6 +301,14 @@ public class PedidoService {
 	    }
 
 	    
+	    /**
+	     * Cambia el estado de un pedido validando el rol del usuario. En los pedidos delivery, los estados EN_CAMINO y ENTREGADO solo pueden ser asignados por el Motorizado.
+	     * @param id identificador del pedido
+	     * @param nuevoEstado estado al que se desea pasar
+	     * @param esMotorizado true si el usuario tiene el rol Motorizado
+	     * @return el pedido actualizado
+	     * @throws Exception si el rol no tiene permiso para ese estado o el cambio no es válido
+	     */
 	    @Transactional
 	    public Pedido actualizarEstadoSegunRol(Long id, String nuevoEstado, boolean esMotorizado) throws Exception {
 	        Pedido pedido = pedidoRepository.findById(id)
@@ -265,6 +320,12 @@ public class PedidoService {
 	        return actualizarEstado(id, nuevoEstado);
 	    }
 
+	    /**
+	     * Calcula el costo de delivery como el 5% del subtotal de productos, con un mínimo de S/ 5.00 y un máximo de S/ 15.00. Los pedidos con recojo en tienda no tienen costo.
+	     * @param modalidad modalidad del pedido, Delivery o Recojo
+	     * @param subtotal suma de los subtotales de los productos
+	     * @return costo de delivery
+	     */
 	    public static BigDecimal calcularCostoDelivery(String modalidad, BigDecimal subtotal) {
 	        if (modalidad == null || subtotal == null || !modalidad.toLowerCase().contains("delivery")) {
 	            return BigDecimal.ZERO.setScale(2);
@@ -279,12 +340,23 @@ public class PedidoService {
 	        return costo;
 	    }
 
+	    /**
+	     * Indica si un estado solo puede ser asignado por el Motorizado.
+	     * @param modalidad modalidad del pedido
+	     * @param estado estado que se desea asignar
+	     * @return true si el estado es EN_CAMINO o ENTREGADO en un pedido delivery
+	     */
 	    public static boolean soloMotorizado(String modalidad, String estado) {
 	        boolean recojo = modalidad != null && modalidad.toLowerCase().contains("recojo");
 	        String valor = estado == null ? "" : estado.toUpperCase();
 	        return !recojo && ("EN_CAMINO".equals(valor) || "ENTREGADO".equals(valor));
 	    }
 
+	    /**
+	     * Devuelve la secuencia de estados válida para una modalidad.
+	     * @param modalidad modalidad del pedido
+	     * @return estados de delivery, o de recojo sin EN_CAMINO
+	     */
 	    public static List<String> estadosPermitidos(String modalidad) {
 	        boolean recojo = modalidad != null && modalidad.toLowerCase().contains("recojo");
 	        return recojo ? ESTADOS_RECOJO : ESTADOS_DELIVERY;

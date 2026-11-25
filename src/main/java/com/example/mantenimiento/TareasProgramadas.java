@@ -23,6 +23,9 @@ import com.example.model.Pedido;
 import com.example.repository.EntregaRepository;
 import com.example.repository.PedidoRepository;
 
+/**
+ * Tareas de mantenimiento programadas con cron: backup diario, revisión de pedidos y entregas, limpieza de backups antiguos y verificación del sistema. Guarda el resultado de la última ejecución de cada tarea.
+ */
 @Component
 public class TareasProgramadas {
 
@@ -54,29 +57,45 @@ public class TareasProgramadas {
 
     private final Map<String, Map<String, Object>> ultimasEjecuciones = new ConcurrentHashMap<>();
 
+    /**
+     * Ejecuta el backup automático según la expresión cron mantenimiento.cron.backup.
+     */
     @Scheduled(cron = "${mantenimiento.cron.backup:0 0 8 * * *}")
     public void backupDiario() {
         log.info("Iniciando backup automático programado");
         ejecutarBackup();
     }
 
+    /**
+     * Ejecuta la revisión diaria de pedidos y entregas según la expresión cron mantenimiento.cron.revision.
+     */
     @Scheduled(cron = "${mantenimiento.cron.revision:0 0 8 * * *}")
     public void revisionDiaria() {
         log.info("Iniciando revisión diaria programada");
         revisar();
     }
 
+    /**
+     * Elimina los backups antiguos según la expresión cron mantenimiento.cron.limpieza.
+     */
     @Scheduled(cron = "${mantenimiento.cron.limpieza:0 30 3 * * SUN}")
     public void limpiezaSemanal() {
         log.info("Iniciando limpieza semanal programada");
         limpiar();
     }
 
+    /**
+     * Verifica el estado del sistema según la expresión cron mantenimiento.cron.verificacion.
+     */
     @Scheduled(cron = "${mantenimiento.cron.verificacion:0 0 * * * *}")
     public void verificacionPeriodica() {
         verificar();
     }
 
+    /**
+     * Consulta el endpoint de salud de Actuator y registra si la aplicación, la base de datos, el disco y los backups están funcionando.
+     * @return estado general y estado de cada componente
+     */
     public Map<String, Object> verificar() {
         HealthComponent salud = healthEndpoint.health();
         String estado = salud.getStatus().getCode();
@@ -107,6 +126,11 @@ public class TareasProgramadas {
         return resultado;
     }
 
+    /**
+     * Restaura la base de datos desde un backup y registra el resultado.
+     * @param archivo nombre del backup a restaurar
+     * @return resultado de la restauración
+     */
     public Map<String, Object> restaurar(String archivo) {
         Map<String, Object> resultado = new LinkedHashMap<>();
         try {
@@ -122,10 +146,18 @@ public class TareasProgramadas {
         return resultado;
     }
 
+    /**
+     * Devuelve el resultado de la última restauración realizada.
+     * @return fecha, éxito y descripción, o null si no hubo restauraciones
+     */
     public Map<String, Object> ultimaRestauracion() {
         return ultimasEjecuciones.get("restauracion");
     }
 
+    /**
+     * Genera un backup y registra el resultado.
+     * @return nombre y tamaño del backup, o el mensaje de error
+     */
     public Map<String, Object> ejecutarBackup() {
         Map<String, Object> resultado = new LinkedHashMap<>();
         try {
@@ -142,6 +174,10 @@ public class TareasProgramadas {
         return resultado;
     }
 
+    /**
+     * Revisa los pedidos pendientes desde hace más de 24 horas, los pedidos atrasados y las entregas con incidencia, y deja avisos en los logs.
+     * @return cantidad encontrada de cada caso
+     */
     public Map<String, Object> revisar() {
         LocalDateTime ahora = LocalDateTime.now();
         List<Pedido> pedidos = pedidoRepository.findAll();
@@ -178,6 +214,10 @@ public class TareasProgramadas {
         return resultado;
     }
 
+    /**
+     * Elimina los backups antiguos y registra el resultado.
+     * @return cantidad de backups eliminados
+     */
     public Map<String, Object> limpiar() {
         int eliminados = backupService.eliminarBackupsAntiguos();
         Map<String, Object> resultado = new LinkedHashMap<>();
@@ -187,6 +227,10 @@ public class TareasProgramadas {
         return resultado;
     }
 
+    /**
+     * Lista las tareas programadas con su expresión cron, la próxima ejecución y el resultado de la última.
+     * @return información de cada tarea
+     */
     public List<Map<String, Object>> tareas() {
         List<Map<String, Object>> lista = new ArrayList<>();
         lista.add(tarea("backup", "Backup de la base de datos", "Copia completa de pasteleriaweb con mysqldump", cronBackup));

@@ -19,6 +19,9 @@ import com.example.repository.PedidoRepository;
 
 import io.micrometer.core.instrument.Metrics;
 
+/**
+ * Servicio que gestiona las entregas de los pedidos delivery y el flujo de trabajo del Motorizado: asignada, en camino, entregada o con incidencia.
+ */
 @Service
 public class EntregaService {
 
@@ -38,22 +41,46 @@ public class EntregaService {
     public static final int ENTREGADA = 2;
     public static final int INCIDENCIA = 3;
 
+    /**
+     * Lista todas las entregas registradas.
+     * @return lista de entregas
+     */
     public List<Entrega> listarAll() {
         return entregaRepository.findAll();
     }
 
+    /**
+     * Lista las entregas asignadas a un motorizado según su nombre.
+     * @param nombreMotorizado nombre del motorizado
+     * @return entregas encontradas
+     */
     public List<Entrega> listarporNombre(String nombreMotorizado) {
         return entregaRepository.buscarPorNombreMotorizado(nombreMotorizado);
     }
 
+    /**
+     * Lista las entregas asignadas a un motorizado.
+     * @param idMotorizado identificador del motorizado
+     * @return entregas del motorizado
+     */
     public List<Entrega> listarPorMotorizado(Long idMotorizado) {
         return entregaRepository.listarPorMotorizado(idMotorizado);
     }
 
+    /**
+     * Busca una entrega por su identificador.
+     * @param id identificador de la entrega
+     * @return la entrega encontrada
+     */
     public Entrega listarID(Long id) {
         return entregaRepository.findById(id).orElse(null);
     }
 
+    /**
+     * Registra una entrega asignando un motorizado a un pedido delivery. El costo de la entrega se copia del costo de delivery del pedido.
+     * @param entrega entrega a registrar
+     * @return la entrega guardada
+     */
     public Entrega guardar(Entrega entrega) {
         if (entrega.getFecha_asignacion() == null) {
             entrega.setFecha_asignacion(LocalDateTime.now());
@@ -74,6 +101,12 @@ public class EntregaService {
         return asignada;
     }
 
+    /**
+     * Actualiza los datos de una entrega.
+     * @param id identificador de la entrega
+     * @param detalles nuevos datos de la entrega
+     * @return la entrega actualizada
+     */
     public Entrega actualizar(Long id, Entrega detalles) {
         Optional<Entrega> optional = entregaRepository.findById(id);
         if (optional.isPresent()) {
@@ -89,6 +122,15 @@ public class EntregaService {
         return null;
     }
 
+    /**
+     * Cambia el estado de una entrega desde la interfaz del Motorizado. Solo el motorizado asignado puede hacerlo; para iniciar la entrega el pedido debe estar LISTO, para entregarla debe estar EN_CAMINO y una incidencia requiere una descripción. También actualiza el estado del pedido.
+     * @param id identificador de la entrega
+     * @param nuevoEstado 1 en camino, 2 entregada o 3 incidencia
+     * @param observacion descripción de la incidencia o comentario
+     * @param correoMotorizado correo del motorizado que realiza el cambio
+     * @return la entrega actualizada
+     * @throws Exception si el motorizado no es el asignado o el cambio no está permitido
+     */
     @Transactional
     public Entrega cambiarEstadoPorMotorizado(Long id, int nuevoEstado, String observacion, String correoMotorizado) throws Exception {
         Entrega entrega = entregaRepository.findById(id)
@@ -142,6 +184,11 @@ public class EntregaService {
         return entregaRepository.save(entrega);
     }
 
+    /**
+     * Elimina una entrega.
+     * @param id identificador de la entrega
+     * @return true si se eliminó, false si no existía
+     */
     public boolean eliminar(Long id) {
         if (entregaRepository.existsById(id)) {
             log.warn("Entrega {} eliminada por el administrador", id);

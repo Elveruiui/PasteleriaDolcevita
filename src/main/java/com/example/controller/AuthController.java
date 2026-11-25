@@ -28,6 +28,9 @@ import com.example.service.UsuarioService;
 
 import io.micrometer.core.instrument.Metrics;
 
+/**
+ * Controlador de autenticación. Gestiona el inicio y cierre de sesión, el registro de clientes y la consulta del usuario autenticado.
+ */
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -39,6 +42,12 @@ public class AuthController {
     @Autowired
     private UsuarioService usuarioService;
 
+    /**
+     * Inicia sesión con correo y contraseña y registra la sesión en Spring Security.
+     * @param credenciales correo y contraseña
+     * @param request solicitud HTTP donde se guarda la sesión
+     * @return el usuario autenticado o 401 si las credenciales no son correctas
+     */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credenciales, HttpServletRequest request) {
         try {
@@ -56,6 +65,12 @@ public class AuthController {
         }
     }
 
+    /**
+     * Registra un nuevo cliente e inicia su sesión.
+     * @param datos datos del cliente
+     * @param request solicitud HTTP donde se guarda la sesión
+     * @return el cliente creado o 400 si los datos no son válidos
+     */
     @PostMapping("/registro")
     public ResponseEntity<?> registro(@RequestBody Usuario datos, HttpServletRequest request) {
         try {
@@ -68,6 +83,11 @@ public class AuthController {
         }
     }
 
+    /**
+     * Devuelve el usuario que tiene la sesión iniciada.
+     * @param request solicitud HTTP con la sesión
+     * @return el usuario o 401 si no hay sesión
+     */
     @GetMapping("/me")
     public ResponseEntity<?> usuarioActual(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
@@ -87,6 +107,11 @@ public class AuthController {
         return ResponseEntity.ok(usuario);
     }
 
+    /**
+     * Cierra la sesión del usuario.
+     * @param request solicitud HTTP con la sesión
+     * @return confirmación del cierre de sesión
+     */
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request) {
         HttpSession session = request.getSession(false);

@@ -27,6 +27,9 @@ import org.springframework.stereotype.Service;
 
 import io.micrometer.core.instrument.Metrics;
 
+/**
+ * Servicio que genera, lista, restaura y elimina los backups de la base de datos pasteleriaweb usando mysqldump y mysql.
+ */
 @Service
 public class BackupService {
 
@@ -54,6 +57,11 @@ public class BackupService {
     @Value("${mantenimiento.mysql-bin:}")
     private String mysqlBin;
 
+    /**
+     * Genera un backup completo de la base de datos con mysqldump y lo guarda en la carpeta de backups con la fecha y hora en el nombre.
+     * @return el archivo .sql generado
+     * @throws Exception si no se encuentra mysqldump o el proceso termina con error
+     */
     public synchronized File generarBackup() throws Exception {
         String[] conexion = datosConexion();
         File destino = carpetaBackups();
@@ -105,6 +113,12 @@ public class BackupService {
         return archivo;
     }
 
+    /**
+     * Restaura la base de datos desde un backup. Antes de restaurar genera automáticamente un respaldo del estado actual.
+     * @param nombre nombre del archivo .sql dentro de la carpeta de backups
+     * @return nombre del archivo restaurado y del respaldo previo
+     * @throws Exception si el nombre no es válido, el archivo no existe o mysql termina con error
+     */
     public synchronized Map<String, Object> restaurarBackup(String nombre) throws Exception {
         if (nombre == null || !nombre.matches("[A-Za-z0-9_\\-]+\\.sql")) {
             throw new Exception("El nombre del backup no es válido.");
@@ -155,6 +169,10 @@ public class BackupService {
         return resultado;
     }
 
+    /**
+     * Lista los backups existentes, del más reciente al más antiguo.
+     * @return nombre, fecha y tamaño de cada backup
+     */
     public List<Map<String, Object>> listarBackups() {
         File[] archivos = carpetaBackups().listFiles((dir, nombre) -> nombre.toLowerCase().endsWith(".sql"));
         List<Map<String, Object>> lista = new ArrayList<>();
@@ -172,6 +190,10 @@ public class BackupService {
         return lista;
     }
 
+    /**
+     * Elimina los backups con más antigüedad que los días de retención configurados.
+     * @return cantidad de backups eliminados
+     */
     public int eliminarBackupsAntiguos() {
         File[] archivos = carpetaBackups().listFiles((dir, nombre) -> nombre.toLowerCase().endsWith(".sql"));
         if (archivos == null) {
@@ -193,10 +215,18 @@ public class BackupService {
         return eliminados;
     }
 
+    /**
+     * Devuelve la carpeta donde se guardan los backups.
+     * @return ruta absoluta de la carpeta
+     */
     public File carpetaBackups() {
         return new File(carpeta).getAbsoluteFile();
     }
 
+    /**
+     * Devuelve los días que se conservan los backups.
+     * @return días de retención
+     */
     public int getDiasRetencion() {
         return diasRetencion;
     }

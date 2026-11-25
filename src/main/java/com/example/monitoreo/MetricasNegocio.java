@@ -10,6 +10,9 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.MeterBinder;
 
+/**
+ * Registra en Micrometer las métricas de negocio de DOLCEVITA: pedidos creados, cancelados, entregados y rechazados, entregas, inicios de sesión y los indicadores de pedidos pendientes, listos y entregas en curso.
+ */
 @Component
 public class MetricasNegocio implements MeterBinder {
 
@@ -19,6 +22,10 @@ public class MetricasNegocio implements MeterBinder {
     @Autowired
     private EntregaRepository entregaRepository;
 
+    /**
+     * Registra los contadores y los indicadores en el registro de métricas.
+     * @param registro registro de métricas de la aplicación
+     */
     @Override
     public void bindTo(MeterRegistry registro) {
         registro.counter("dolcevita.pedidos.creados", "modalidad", "Delivery");
