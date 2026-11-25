@@ -36,6 +36,7 @@ public class SecurityConfig {
                 .antMatchers("/auth/**").permitAll()
                 .antMatchers("/actuator/health/**", "/actuator/info").permitAll()
                 .antMatchers("/actuator/**").hasRole("ADMINISTRADOR")
+                .antMatchers("/mantenimiento/**").hasRole("ADMINISTRADOR")
 
                 .antMatchers(HttpMethod.GET,
                     "/producto/listarProductos",

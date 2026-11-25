@@ -6,6 +6,7 @@ const SECCIONES = [
   { id: "entregas", url: "entregas.html", icono: "fa-motorcycle", texto: "Entregas", roles: ["ADMIN", "MOTOR"] },
   { id: "usuarios", url: "usuarios.html", icono: "fa-users", texto: "Usuarios", roles: ["ADMIN"] },
   { id: "monitoreo", url: "monitoreo.html", icono: "fa-heart-pulse", texto: "Monitoreo", roles: ["ADMIN"] },
+  { id: "mantenimiento", url: "mantenimiento.html", icono: "fa-screwdriver-wrench", texto: "Mantenimiento", roles: ["ADMIN"] },
 ];
 
 const ESTADOS_PEDIDO = ["PENDIENTE", "CONFIRMADO", "LISTO", "EN_CAMINO", "ENTREGADO", "CANCELADO"];
