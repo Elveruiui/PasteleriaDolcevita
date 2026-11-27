@@ -2,8 +2,49 @@ const contenedor = document.getElementById("listaProductos");
 const chips = document.getElementById("chipsCategorias");
 let todosLosProductos = [];
 let categoriaActiva = new URLSearchParams(location.search).get("categoria") || "todas";
+let textoBusqueda = "";
+let ordenActivo = "defecto";
+let soloDisponibles = false;
 
 const ORDEN_TAMANO = { "PEQUEÑO": 1, "MEDIANO": 2, "GRANDE": 3 };
+
+function montarHerramientasMenu() {
+  if (document.getElementById("menuHerramientas")) return;
+  const barra = document.createElement("div");
+  barra.id = "menuHerramientas";
+  barra.className = "menu-herramientas";
+  barra.innerHTML = `
+    <div class="menu-busqueda">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="buscarMenu" placeholder="Buscar tortas, postres o ingredientes...">
+    </div>
+    <div class="menu-orden">
+      <select id="ordenMenu" aria-label="Ordenar productos">
+        <option value="defecto">Orden predeterminado</option>
+        <option value="precio_asc">Precio: menor a mayor</option>
+        <option value="precio_desc">Precio: mayor a menor</option>
+        <option value="nombre_asc">Nombre: A - Z</option>
+      </select>
+    </div>
+    <label class="menu-check">
+      <input type="checkbox" id="chkDisponibles"> Solo disponibles
+    </label>
+  `;
+  chips.insertAdjacentElement("afterend", barra);
+
+  document.getElementById("buscarMenu").addEventListener("input", (e) => {
+    textoBusqueda = e.target.value.trim().toLowerCase();
+    mostrarProductos();
+  });
+  document.getElementById("ordenMenu").addEventListener("change", (e) => {
+    ordenActivo = e.target.value;
+    mostrarProductos();
+  });
+  document.getElementById("chkDisponibles").addEventListener("change", (e) => {
+    soloDisponibles = e.target.checked;
+    mostrarProductos();
+  });
+}
 
 function agruparPorNombre(lista) {
   const mapa = new Map();
@@ -51,12 +92,30 @@ function tarjetaProducto(variantes) {
 }
 
 function mostrarProductos() {
-  const filtrados = todosLosProductos.filter(
-    (p) => categoriaActiva === "todas" || String(p.categoria && p.categoria.id_categoria) === categoriaActiva
-  );
-  const grupos = agruparPorNombre(filtrados);
+  const filtrados = todosLosProductos.filter((p) => {
+    const pasaCat = categoriaActiva === "todas" || String(p.categoria && p.categoria.id_categoria) === categoriaActiva;
+    const pasaTexto = !textoBusqueda ||
+      (p.nombre || "").toLowerCase().includes(textoBusqueda) ||
+      (p.descripcion || "").toLowerCase().includes(textoBusqueda);
+    return pasaCat && pasaTexto;
+  });
+
+  let grupos = agruparPorNombre(filtrados);
+  if (soloDisponibles) {
+    grupos = grupos.filter((variantes) => variantes.some((v) => v.stock > 0));
+  }
+
+  const precioMinimoDe = (variantes) => Math.min(...variantes.map((v) => v.precio));
+  if (ordenActivo === "precio_asc") {
+    grupos.sort((a, b) => precioMinimoDe(a) - precioMinimoDe(b));
+  } else if (ordenActivo === "precio_desc") {
+    grupos.sort((a, b) => precioMinimoDe(b) - precioMinimoDe(a));
+  } else if (ordenActivo === "nombre_asc") {
+    grupos.sort((a, b) => a[0].nombre.localeCompare(b[0].nombre, "es"));
+  }
+
   if (grupos.length === 0) {
-    contenedor.innerHTML = '<p class="mensaje-estado">No hay productos en esta categoría por ahora.</p>';
+    contenedor.innerHTML = '<p class="mensaje-estado">No encontramos productos que coincidan con tu búsqueda.</p>';
     return;
   }
   contenedor.innerHTML = grupos.map(tarjetaProducto).join("");
@@ -87,6 +146,7 @@ async function iniciar() {
     const [categorias, productos] = await Promise.all([Api.categorias(), Api.productos()]);
     todosLosProductos = productos.filter((p) => p.estado === 1);
     mostrarChips(categorias);
+    montarHerramientasMenu();
     mostrarProductos();
   } catch (error) {
     console.error(error);

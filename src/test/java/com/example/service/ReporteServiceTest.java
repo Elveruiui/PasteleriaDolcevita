@@ -81,8 +81,9 @@ class ReporteServiceTest {
         assertEquals("#DV-00002", hoja.getRow(1).getCell(0).getStringCellValue());
         assertEquals("#DV-00001", hoja.getRow(2).getCell(0).getStringCellValue());
         assertEquals("Lucia Paredes", hoja.getRow(2).getCell(1).getStringCellValue());
-        assertEquals("Pendiente", hoja.getRow(2).getCell(5).getStringCellValue());
-        assertEquals(100.0, hoja.getRow(2).getCell(6).getNumericCellValue(), 0.001);
+        assertEquals("Contra entrega", hoja.getRow(2).getCell(5).getStringCellValue());
+        assertEquals("Pendiente", hoja.getRow(2).getCell(6).getStringCellValue());
+        assertEquals(100.0, hoja.getRow(2).getCell(7).getNumericCellValue(), 0.001);
     }
 
     @Test

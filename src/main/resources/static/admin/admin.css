@@ -45,3 +45,15 @@ button.pestana { font-family: inherit; cursor: pointer; }
 .btn-rojo { background: var(--rojo); border-color: var(--rojo); color: #fff; }
 .btn-rojo:hover { background: #9c2f2f; border-color: #9c2f2f; }
 @media (max-width: 960px) { .detalle-admin.ajustado { grid-template-columns: 1fr; } }
+
+
+.dash-filtros { background: #fff; border-radius: var(--radio); padding: 1rem 1.3rem; box-shadow: var(--sombra-suave); margin-bottom: 1.4rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; justify-content: space-between; }
+.dash-rangos { display: flex; flex-wrap: wrap; gap: .45rem; }
+.dash-fechas { display: flex; gap: .8rem; align-items: flex-end; flex-wrap: wrap; }
+.dash-fechas label { margin: 0 0 .25rem; font-size: .75rem; }
+.dash-fechas input { padding: .45rem .8rem; font-size: .82rem; }
+.barra-pago { margin-bottom: .95rem; }
+.barra-pago:last-child { margin-bottom: 0; }
+.barra-pago-cab { display: flex; justify-content: space-between; font-size: .86rem; margin-bottom: .3rem; gap: .6rem; }
+.barra-pago-pista { height: 10px; border-radius: 999px; background: var(--gris-claro); overflow: hidden; }
+.barra-pago-relleno { height: 100%; border-radius: 999px; transition: width .4s ease; }

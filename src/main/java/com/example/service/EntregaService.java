@@ -150,4 +150,8 @@ public class EntregaService {
         }
         return false;
     }
+    
+    public Entrega buscarPorPedido(Long idPedido) {
+        return entregaRepository.buscarPorPedido(idPedido).orElse(null);
+    }
 }

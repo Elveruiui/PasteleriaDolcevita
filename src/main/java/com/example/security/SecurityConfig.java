@@ -45,7 +45,8 @@ public class SecurityConfig {
                     "/producto/listarId/**",
                     "/categoria/listarCategorias",
                     "/categoria/listarNombre/**",
-                    "/categoria/listarId/**"
+                    "/categoria/listarId/**",
+                    "/resena/producto/**"
                 ).permitAll()
 
                 
@@ -71,7 +72,7 @@ public class SecurityConfig {
                 .antMatchers(HttpMethod.DELETE, "/pedido/**").hasRole("ADMINISTRADOR")
 
                 .antMatchers("/mis-pedidos.html", "/checkout.html", "/confirmacion.html").authenticated()
-                .antMatchers("/direccion/**", "/pedido/**", "/detallepedido/**").authenticated()
+                .antMatchers("/direccion/**", "/pedido/**", "/detallepedido/**", "/resena/**").authenticated()
 
                 .anyRequest().authenticated()
             .and()

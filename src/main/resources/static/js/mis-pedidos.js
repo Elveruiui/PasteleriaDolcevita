@@ -78,12 +78,19 @@ function dibujarListaPedidos() {
     const tamanoPrimero = primero && primero.tamano ? ` (${primero.tamano})` : "";
     const cantidad = detalles.length;
     const estado = estadoDe(p);
+    const botonCancelar = estado === "PENDIENTE"
+      ? `<button type="button" class="btn btn-peligro btn-sm" data-cancelar-pedido="${p.id_pedido}" title="Cancelar pedido"><i class="fa-solid fa-xmark"></i></button>`
+      : "";
     return '<div class="pedido">' +
       "<div><strong>" + codigo(p.id_pedido) + "</strong><small>" + fechaCorta(p.fecha_pedido) + "</small></div>" +
       '<div class="prod"><img src="' + urlImagen(primero ? primero.imagen : null) + '" alt="">' +
       "<div>" + esc(primero ? primero.nombre + tamanoPrimero : "Pedido") + "<small>" + cantidad + (cantidad === 1 ? " producto" : " productos") + "</small></div></div>" +
       '<div><span class="estado ' + (CLASES_ESTADO[estado] || "e-nuevo") + '">' + esc(textoEstado(estado, p.modalidad_entrega)) + "</span></div>" +
-      '<div><a class="btn btn-borde btn-sm" href="confirmacion.html?id=' + p.id_pedido + '">Ver detalle</a></div></div>';
+      '<div style="display:flex;gap:.4rem;justify-content:flex-end;flex-wrap:wrap">' +
+      '<a class="ic-btn" href="/pedido/comprobante/' + p.id_pedido + '" title="Descargar boleta PDF"><i class="fa-solid fa-file-pdf"></i></a>' +
+      '<a class="btn btn-borde btn-sm" href="confirmacion.html?id=' + p.id_pedido + '">Ver detalle</a>' +
+      botonCancelar +
+      "</div></div>";
   }).join("");
   listaPedidos.querySelectorAll("img").forEach(conRespaldo);
 }
@@ -421,6 +428,22 @@ function dibujarPerfilUsuario() {
 listaPedidos.addEventListener("click", async (e) => {
   const btnEditar = e.target.closest("[data-editar-dir]");
   const btnEliminar = e.target.closest("[data-eliminar-dir]");
+  const btnCancelarPedido = e.target.closest("[data-cancelar-pedido]");
+  
+  if (btnCancelarPedido) {
+    const idPed = Number(btnCancelarPedido.dataset.cancelarPedido);
+    if (!confirm(`¿Deseas cancelar el pedido ${codigo(idPed)}? Esta acción no se puede deshacer.`)) return;
+    btnCancelarPedido.disabled = true;
+    try {
+      await Api.cancelarPedidoCliente(idPed);
+      const listaPed = await pedir("/pedido/listarPorUsuario/" + clienteActual.id_usuario);
+      pedidos = listaPed.sort((a, b) => b.id_pedido - a.id_pedido);
+      dibujarVista();
+    } catch (err) {
+      alert(err.message || "No se pudo cancelar el pedido.");
+      btnCancelarPedido.disabled = false;
+    }
+  }
 
   if (btnEditar) {
     const id = Number(btnEditar.dataset.editarDir);

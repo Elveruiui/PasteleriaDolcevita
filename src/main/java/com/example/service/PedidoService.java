@@ -75,6 +75,12 @@ public class PedidoService {
 	        Timer.Sample muestra = Timer.start(Metrics.globalRegistry);
 	        pedido.setFecha_pedido(LocalDateTime.now());
 	        pedido.setEstado("PENDIENTE");
+	        
+	        if (pedido.getMetodo_pago() == null || pedido.getMetodo_pago().trim().isEmpty()) {
+	            pedido.setMetodo_pago("CONTRA_ENTREGA");
+	        } else {
+	            pedido.setMetodo_pago(pedido.getMetodo_pago().trim().toUpperCase());
+	        }
 
 	        BigDecimal totalCalculado = BigDecimal.ZERO;
 
@@ -300,6 +306,23 @@ public class PedidoService {
 	                }
 	            }
 	        }
+	    }
+	    
+	    @Transactional
+	    public Pedido cancelarPorCliente(Long idPedido, String correoCliente) throws Exception {
+	        Pedido pedido = pedidoRepository.findById(idPedido)
+	                .orElseThrow(() -> new Exception("Pedido no encontrado con ID: " + idPedido));
+
+	        if (pedido.getUsuario() == null || correoCliente == null
+	                || !correoCliente.equalsIgnoreCase(pedido.getUsuario().getCorreo())) {
+	            throw new Exception("No tienes permisos para cancelar este pedido.");
+	        }
+
+	        if (!"PENDIENTE".equalsIgnoreCase(pedido.getEstado())) {
+	            throw new Exception("Solo puedes cancelar pedidos que aún están en estado Pendiente.");
+	        }
+
+	        return actualizarEstado(idPedido, "CANCELADO");
 	    }
 
 }

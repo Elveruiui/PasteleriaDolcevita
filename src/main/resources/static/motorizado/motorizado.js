@@ -179,7 +179,17 @@ function dibujarDetalle() {
     "</div>" +
     '<div class="moto-bloque"><h3>Productos</h3>' + (productos || '<p class="moto-sub">Sin productos.</p>') + "</div>" +
     (p.observacion ? '<div class="moto-bloque moto-notas"><h3>Notas del cliente</h3><p>' + esc(p.observacion) + "</p></div>" : "") +
-    '<div class="moto-bloque moto-cobro"><div><h3>Monto a cobrar</h3><small>Pago contra entrega' + (Number(p.costo_delivery) > 0 ? " · incluye delivery " + formatearPrecio(p.costo_delivery) : "") + "</small></div>" +
+    (function () {
+      const m = String(p.metodo_pago || "CONTRA_ENTREGA").toUpperCase();
+      const yaPagado = m === "TARJETA" || m === "YAPE_PLIN";
+      if (yaPagado) {
+        const nombreMetodo = m === "TARJETA" ? "Tarjeta" : "QR (Yape / Plin)";
+        return '<div class="moto-bloque moto-cobro"><div><h3>Estado de pago</h3><small>Pagado online con ' + nombreMetodo + ' · Total ' + formatearPrecio(p.total || 0) + '</small></div>' +
+          '<strong style="color:var(--verde)">PAGADO</strong></div>';
+      }
+      return '<div class="moto-bloque moto-cobro"><div><h3>Monto a cobrar</h3><small>Pago contra entrega' + (Number(p.costo_delivery) > 0 ? " · incluye delivery " + formatearPrecio(p.costo_delivery) : "") + "</small></div>" +
+        "<strong>" + formatearPrecio(p.total || 0) + "</strong></div>";
+    })() +
     "<strong>" + formatearPrecio(p.total || 0) + "</strong></div>" +
     (accion ? '<div class="moto-acciones">' + accion + "</div>" : "");
 

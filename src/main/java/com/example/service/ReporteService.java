@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.example.model.Categoria;
+import com.example.model.DetallePedido;
 import com.example.model.DireccionUsuario;
 import com.example.model.Entrega;
 import com.example.model.Pedido;
@@ -77,7 +78,7 @@ public class ReporteService {
 
             Sheet hoja = libro.createSheet("Pedidos");
             escribirTitulos(hoja, titulo, "Código", "Cliente", "Fecha del pedido", "Fecha de entrega",
-                    "Modalidad", "Estado", "Total");
+                    "Modalidad", "Forma de pago", "Estado", "Total");
 
             int numeroFila = 1;
             for (Pedido pedido : pedidos) {
@@ -87,10 +88,11 @@ public class ReporteService {
                 fila.createCell(2).setCellValue(formatearFecha(pedido.getFecha_pedido()));
                 fila.createCell(3).setCellValue(formatearFecha(pedido.getFecha_entrega()));
                 fila.createCell(4).setCellValue(textoSeguro(pedido.getModalidad_entrega()));
-                fila.createCell(5).setCellValue(etiquetaEstado(pedido.getEstado()));
-                escribirMoneda(fila.createCell(6), pedido.getTotal(), moneda);
+                fila.createCell(5).setCellValue(etiquetaMetodoPago(pedido.getMetodo_pago()));
+                fila.createCell(6).setCellValue(etiquetaEstado(pedido.getEstado()));
+                escribirMoneda(fila.createCell(7), pedido.getTotal(), moneda);
             }
-            fijarAnchos(hoja, 7);
+            fijarAnchos(hoja, 8);
 
             escribirResumen(libro, pedidos, titulo, moneda);
 
@@ -229,8 +231,8 @@ public class ReporteService {
 
             agregarCabeceraPdf(doc, "Reporte de Pedidos Registrados");
 
-            PdfPTable tabla = crearTablaPdf(new float[]{1.4f, 2.5f, 2.0f, 2.0f, 1.5f, 1.5f, 1.5f},
-                    "Código", "Cliente", "Fecha Pedido", "Fecha Entrega", "Modalidad", "Estado", "Total");
+            PdfPTable tabla = crearTablaPdf(new float[]{1.3f, 2.2f, 1.8f, 1.8f, 1.3f, 1.6f, 1.4f, 1.3f},
+                    "Código", "Cliente", "Fecha Pedido", "Fecha Entrega", "Modalidad", "Forma de pago", "Estado", "Total");
 
             for (Pedido p : pedidos) {
                 agregarCeldaPdf(tabla, codigoPedido(p));
@@ -238,6 +240,7 @@ public class ReporteService {
                 agregarCeldaPdf(tabla, formatearFecha(p.getFecha_pedido()));
                 agregarCeldaPdf(tabla, formatearFecha(p.getFecha_entrega()));
                 agregarCeldaPdf(tabla, textoSeguro(p.getModalidad_entrega()));
+                agregarCeldaPdf(tabla, etiquetaMetodoPago(p.getMetodo_pago()));
                 agregarCeldaPdf(tabla, etiquetaEstado(p.getEstado()));
                 agregarCeldaPdf(tabla, formatearMonedaTexto(p.getTotal()));
             }
@@ -529,5 +532,111 @@ public class ReporteService {
             return "Desconocido";
         }
         return ESTADOS_ENTREGA[estado];
+    }
+    
+    private String etiquetaMetodoPago(String metodoPago) {
+        if (metodoPago == null || metodoPago.trim().isEmpty()) {
+            return "Contra entrega";
+        }
+        String valor = metodoPago.trim().toUpperCase();
+        if ("TARJETA".equals(valor)) {
+            return "Tarjeta";
+        }
+        if ("YAPE_PLIN".equals(valor)) {
+            return "QR (Yape / Plin)";
+        }
+        if ("CONTRA_ENTREGA".equals(valor)) {
+            return "Contra entrega";
+        }
+        return etiquetaEstado(valor);
+    }
+    
+    
+    public byte[] generarComprobantePedidoPdf(Pedido p) throws IOException {
+        try (ByteArrayOutputStream salida = new ByteArrayOutputStream()) {
+            Document doc = new Document(PageSize.A4, 36, 36, 36, 36);
+            PdfWriter.getInstance(doc, salida);
+            doc.open();
+
+            agregarCabeceraPdf(doc, "Comprobante de Pedido " + codigoPedido(p));
+
+            com.lowagie.text.Font fuenteSeccion = new com.lowagie.text.Font(
+                    com.lowagie.text.Font.HELVETICA, 11, com.lowagie.text.Font.BOLD, new Color(114, 47, 69));
+            com.lowagie.text.Font fuenteTexto = new com.lowagie.text.Font(
+                    com.lowagie.text.Font.HELVETICA, 10, com.lowagie.text.Font.NORMAL, new Color(40, 40, 40));
+            com.lowagie.text.Font fuenteNegrita = new com.lowagie.text.Font(
+                    com.lowagie.text.Font.HELVETICA, 11, com.lowagie.text.Font.BOLD, new Color(61, 43, 31));
+
+            Paragraph datosCab = new Paragraph("Datos del cliente y entrega", fuenteSeccion);
+            datosCab.setSpacingAfter(6);
+            doc.add(datosCab);
+
+            doc.add(new Paragraph("Cliente: " + nombreCompleto(p.getUsuario()), fuenteTexto));
+            if (p.getUsuario() != null && p.getUsuario().getCorreo() != null) {
+                doc.add(new Paragraph("Correo: " + p.getUsuario().getCorreo(), fuenteTexto));
+            }
+            if (p.getUsuario() != null && p.getUsuario().getTelefono() != null && !p.getUsuario().getTelefono().isEmpty()) {
+                doc.add(new Paragraph("Teléfono: " + p.getUsuario().getTelefono(), fuenteTexto));
+            }
+            doc.add(new Paragraph("Fecha de pedido: " + formatearFecha(p.getFecha_pedido()), fuenteTexto));
+            doc.add(new Paragraph("Fecha de entrega: " + formatearFecha(p.getFecha_entrega()), fuenteTexto));
+            doc.add(new Paragraph("Modalidad: " + textoSeguro(p.getModalidad_entrega()), fuenteTexto));
+            doc.add(new Paragraph("Forma de pago: " + etiquetaMetodoPago(p.getMetodo_pago()), fuenteTexto));
+            doc.add(new Paragraph("Dirección: " + direccionDe(p), fuenteTexto));
+            doc.add(new Paragraph("Estado actual: " + etiquetaEstado(p.getEstado()), fuenteTexto));
+            if (p.getObservacion() != null && !p.getObservacion().trim().isEmpty()) {
+                doc.add(new Paragraph("Observaciones: " + p.getObservacion().trim(), fuenteTexto));
+            }
+
+            Paragraph detCab = new Paragraph("Detalle de productos", fuenteSeccion);
+            detCab.setSpacingBefore(14);
+            detCab.setSpacingAfter(8);
+            doc.add(detCab);
+
+            PdfPTable tabla = crearTablaPdf(new float[]{3.2f, 1.3f, 0.9f, 1.4f, 1.5f},
+                    "Producto", "Tamaño", "Cant.", "Precio unit.", "Subtotal");
+
+            BigDecimal subtotalProductos = BigDecimal.ZERO;
+            if (p.getDetalles() != null) {
+                for (DetallePedido d : p.getDetalles()) {
+                    String nomProd = d.getProducto() != null ? textoSeguro(d.getProducto().getNombre()) : "—";
+                    String tamProd = d.getProducto() != null ? tamanoSeguro(d.getProducto().getTamano()) : "MEDIANO";
+                    agregarCeldaPdf(tabla, nomProd);
+                    agregarCeldaPdf(tabla, tamProd);
+                    agregarCeldaPdf(tabla, String.valueOf(d.getCantidad()));
+                    agregarCeldaPdf(tabla, formatearMonedaTexto(d.getPrecio_unitario()));
+                    agregarCeldaPdf(tabla, formatearMonedaTexto(d.getSubtotal()));
+                    if (d.getSubtotal() != null) {
+                        subtotalProductos = subtotalProductos.add(d.getSubtotal());
+                    }
+                }
+            }
+            doc.add(tabla);
+
+            BigDecimal costoDel = p.getCosto_delivery() == null ? BigDecimal.ZERO : p.getCosto_delivery();
+            Paragraph resumenSub = new Paragraph("Subtotal productos: " + formatearMonedaTexto(subtotalProductos), fuenteTexto);
+            resumenSub.setAlignment(Element.ALIGN_RIGHT);
+            resumenSub.setSpacingBefore(10);
+            doc.add(resumenSub);
+
+            if (costoDel.compareTo(BigDecimal.ZERO) > 0) {
+                Paragraph resumenDel = new Paragraph("Costo de delivery: " + formatearMonedaTexto(costoDel), fuenteTexto);
+                resumenDel.setAlignment(Element.ALIGN_RIGHT);
+                doc.add(resumenDel);
+            }
+
+            Paragraph resumenTot = new Paragraph("TOTAL: " + formatearMonedaTexto(p.getTotal()), fuenteNegrita);
+            resumenTot.setAlignment(Element.ALIGN_RIGHT);
+            resumenTot.setSpacingBefore(4);
+            doc.add(resumenTot);
+
+            Paragraph pie = new Paragraph("\nGracias por elegir DOLCEVITA Pastelería Artesanal.", fuenteTexto);
+            pie.setAlignment(Element.ALIGN_CENTER);
+            pie.setSpacingBefore(18);
+            doc.add(pie);
+
+            doc.close();
+            return salida.toByteArray();
+        }
     }
 }

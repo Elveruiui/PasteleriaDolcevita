@@ -42,6 +42,13 @@ function lineaDeTiempo(p, estadoActual) {
     '<ol class="seguimiento' + (cancelado ? " cancelado" : "") + '">' + items + "</ol></section>";
 }
 
+function etiquetaPagoAdmin(metodo) {
+  const m = String(metodo || "CONTRA_ENTREGA").toUpperCase();
+  if (m === "TARJETA") return '<span class="estado e-entregado">Tarjeta (Pagado)</span>';
+  if (m === "YAPE_PLIN") return '<span class="estado e-entregado">QR Yape / Plin (Pagado)</span>';
+  return "Contra entrega";
+}
+
 function dibujar(p) {
   const estadoActual = String(p.estado || "").toUpperCase();
   const cancelado = estadoActual === "CANCELADO";
@@ -84,6 +91,7 @@ function dibujar(p) {
     '<div class="fila-dato"><span>Correo</span><span>' + esc(p.usuario ? p.usuario.correo : "—") + "</span></div>" +
     '<div class="fila-dato"><span>Teléfono</span><span>' + esc(p.usuario && p.usuario.telefono ? p.usuario.telefono : "—") + "</span></div>" +
     '<div class="fila-dato"><span>Modalidad</span><span>' + esc(p.modalidad_entrega || "—") + "</span></div>" +
+    '<div class="fila-dato"><span>Forma de pago</span><span>' + etiquetaPagoAdmin(p.metodo_pago) + "</span></div>" +
     '<div class="fila-dato" style="align-items:flex-start"><span>Dirección</span>' + formatearDireccionAdmin(p.direccion) + "</div>" +
     '<div class="fila-dato"><span>Fecha del pedido</span><span>' + fechaHora(p.fecha_pedido) + "</span></div>" +
     '<div class="fila-dato"><span>Fecha de entrega</span><span>' + fechaHora(p.fecha_entrega) + "</span></div>" +

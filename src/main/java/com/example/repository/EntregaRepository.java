@@ -16,4 +16,7 @@ public interface EntregaRepository extends JpaRepository<Entrega, Long>{
 
     @Query("SELECT e FROM Entrega e WHERE e.motorizado.id_usuario = :idMotorizado")
     List<Entrega> listarPorMotorizado(@Param("idMotorizado") Long idMotorizado);
+    
+    @Query("SELECT e FROM Entrega e WHERE e.pedido.id_pedido = :idPedido")
+    java.util.Optional<Entrega> buscarPorPedido(@Param("idPedido") Long idPedido);
 }

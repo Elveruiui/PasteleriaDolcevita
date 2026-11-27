@@ -1,12 +1,19 @@
 const zonaCheckout = document.getElementById("zonaCheckout");
 const avisoCheckout = document.getElementById("avisoCheckout");
 
+const URL_QR_POKEAPI = "https://pokeapi.co/";
+const IMG_QR_POKEAPI =
+  "https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=10&data=" +
+  encodeURIComponent(URL_QR_POKEAPI);
+
 let productosPedido = [];
 let cliente = null;
 let direccionesGuardadas = [];
 let mapa = null;
 let marcador = null;
-let coordenadasSeleccionadas = { lat: -12.1111, lng: -76.9892 }; // Santiago de Surco / Lima por defecto
+let coordenadasSeleccionadas = { lat: -12.1111, lng: -76.9892 };
+let pagoConfirmado = false;
+let detallePagoSimulado = "";
 
 function hoyISO() {
   const d = new Date();
@@ -23,15 +30,34 @@ function costoDelivery(modalidad, subtotal) {
   return Math.min(15, Math.max(5, Math.round(subtotal * 5) / 100));
 }
 
+function totalActual() {
+  const elegido = document.querySelector("input[name=modalidad]:checked");
+  const modalidad = elegido ? elegido.value : "Recojo";
+  const subtotal = subtotalProductos();
+  return subtotal + costoDelivery(modalidad, subtotal);
+}
+
+function metodoPagoSeleccionado() {
+  const radio = document.querySelector("input[name=metodoPago]:checked");
+  return radio ? radio.value : "TARJETA";
+}
+
 function actualizarTotales() {
   const elegido = document.querySelector("input[name=modalidad]:checked");
   const modalidad = elegido ? elegido.value : "Recojo";
   const subtotal = subtotalProductos();
   const delivery = costoDelivery(modalidad, subtotal);
+  const total = subtotal + delivery;
+
   document.getElementById("resSubtotal").textContent = formatearPrecio(subtotal);
   document.getElementById("resDelivery").textContent = formatearPrecio(delivery);
   document.getElementById("filaDelivery").style.display = modalidad === "Delivery" ? "" : "none";
-  document.getElementById("resTotal").textContent = formatearPrecio(subtotal + delivery);
+  document.getElementById("resTotal").textContent = formatearPrecio(total);
+
+  const montoTarjeta = document.getElementById("montoTarjeta");
+  const montoQr = document.getElementById("montoQr");
+  if (montoTarjeta) montoTarjeta.textContent = formatearPrecio(total);
+  if (montoQr) montoQr.textContent = formatearPrecio(total);
 }
 
 function dibujarResumen() {
@@ -54,7 +80,7 @@ function dibujarResumen() {
     <div class="fila-dato"><span>Productos</span><span id="resSubtotal">${formatearPrecio(total)}</span></div>
     <div class="fila-dato" id="filaDelivery" style="display:none"><span>Delivery</span><span id="resDelivery">${formatearPrecio(0)}</span></div>
     <div class="fila-total"><span>Total</span><span class="monto" id="resTotal">${formatearPrecio(total)}</span></div>
-    <p class="ayuda" style="margin-top:.8rem">Pago contra entrega. El delivery cuesta el 5% del pedido, con un mínimo de S/ 5.00 y un máximo de S/ 15.00.</p>
+    <p class="ayuda" style="margin-top:.8rem">El delivery cuesta el 5% del pedido, con un mínimo de S/ 5.00 y un máximo de S/ 15.00.</p>
     <a class="ayuda" href="carrito.html" style="text-decoration:underline">Volver al carrito</a></div>`;
 }
 
@@ -107,6 +133,78 @@ function dibujarOpcionesDirecciones() {
   `;
 }
 
+function dibujarSeccionPago() {
+  const monto = formatearPrecio(subtotalProductos());
+  return `
+    <div style="margin-top:1.4rem;padding-top:1.2rem;border-top:1px solid var(--gris-borde)">
+      <h3 style="font-size:1.15rem;margin-bottom:.6rem">Forma de pago</h3>
+      <div class="fila-radio" style="margin-bottom:1rem">
+        <label><input type="radio" name="metodoPago" value="TARJETA" checked> <i class="fa-regular fa-credit-card"></i> Tarjeta</label>
+        <label><input type="radio" name="metodoPago" value="YAPE_PLIN"> <i class="fa-solid fa-qrcode"></i> QR (Yape / Plin)</label>
+        <label><input type="radio" name="metodoPago" value="CONTRA_ENTREGA"> <i class="fa-solid fa-money-bill-wave"></i> Contra entrega</label>
+      </div>
+
+      <!-- BLOQUE PAGO CON TARJETA (SIMULACIÓN) -->
+      <div id="bloquePagoTarjeta" style="background:#fdfbf8;padding:1rem;border-radius:12px;border:1px solid #eadfce">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;flex-wrap:wrap;gap:.4rem">
+          <strong><i class="fa-solid fa-lock" style="color:var(--dorado-oscuro)"></i> Pago con tarjeta (Simulación)</strong>
+          <span class="ayuda">Monto a pagar: <strong id="montoTarjeta">${monto}</strong></span>
+        </div>
+        <label for="cardNumero">Número de tarjeta</label>
+        <input type="text" id="cardNumero" inputmode="numeric" maxlength="19" placeholder="4557 8801 2345 6789" autocomplete="off">
+
+        <label for="cardTitular">Nombre del titular</label>
+        <input type="text" id="cardTitular" maxlength="80" placeholder="Como aparece en la tarjeta" value="${esc((cliente.nombre || "") + " " + (cliente.apellido || "")).trim()}">
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
+          <div>
+            <label for="cardVencimiento">Vencimiento (MM/AA)</label>
+            <input type="text" id="cardVencimiento" inputmode="numeric" maxlength="5" placeholder="08/29" autocomplete="off">
+          </div>
+          <div>
+            <label for="cardCvv">CVV</label>
+            <input type="password" id="cardCvv" inputmode="numeric" maxlength="4" placeholder="123" autocomplete="off">
+          </div>
+        </div>
+        <p class="ayuda" style="margin-top:.5rem">Modo simulación: puedes ingresar cualquier tarjeta de 16 dígitos para probar.</p>
+        <p class="aviso-carrito" id="errorPagoTarjeta" hidden style="margin-top:.7rem;margin-bottom:0"></p>
+        <button type="button" class="btn btn-borde btn-bloque" id="btnConfirmarPagoTarjeta" style="margin-top:.9rem">
+          <i class="fa-solid fa-shield-check"></i> Confirmar pago
+        </button>
+      </div>
+
+      <!-- BLOQUE PAGO CON QR YAPE / PLIN (SIMULACIÓN) -->
+      <div id="bloquePagoQr" hidden style="background:#fdfbf8;padding:1rem;border-radius:12px;border:1px solid #eadfce;text-align:center">
+        <div style="display:flex;justify-content:center;gap:.5rem;margin-bottom:.6rem">
+          <span style="background:#742284;color:#fff;padding:.2rem .8rem;border-radius:999px;font-size:.78rem;font-weight:600">Yape</span>
+          <span style="background:#00b8a9;color:#fff;padding:.2rem .8rem;border-radius:999px;font-size:.78rem;font-weight:600">Plin</span>
+        </div>
+        <p style="font-size:.9rem;margin-bottom:.4rem">Escanea el código QR para pagar <strong id="montoQr" style="color:var(--dorado-oscuro)">${monto}</strong></p>
+        <a href="${URL_QR_POKEAPI}" target="_blank" rel="noopener" title="Abrir enlace del QR (PokéAPI)" style="display:inline-block;background:#fff;padding:.6rem;border-radius:14px;border:2px solid #eadfce;margin:.5rem auto">
+          <img src="${IMG_QR_POKEAPI}" alt="Código QR de pago simulado (PokéAPI)" width="210" height="210" style="margin:0 auto;border-radius:8px">
+        </a>
+        <p class="ayuda" style="margin-top:.3rem">
+          Simulación QR · Destino: <a href="${URL_QR_POKEAPI}" target="_blank" rel="noopener" style="color:var(--vino);text-decoration:underline">pokeapi.co</a>
+        </p>
+        <button type="button" class="btn btn-borde btn-bloque" id="btnConfirmarPagoQr" style="margin-top:.9rem">
+          <i class="fa-solid fa-check-double"></i> Confirmar pago
+        </button>
+      </div>
+
+      <!-- AVISO PAGO CONTRA ENTREGA -->
+      <div id="bloquePagoContraEntrega" hidden style="background:#faf6f0;padding:.85rem 1rem;border-radius:12px;border:1px solid #eadfce">
+        <p class="ayuda" style="margin:0"><i class="fa-solid fa-circle-info" style="color:var(--dorado-oscuro)"></i> Pagarás al momento de recibir o recoger tu pedido (efectivo, Yape o Plin).</p>
+      </div>
+
+      <!-- BANNER DE PAGO EXITOSO -->
+      <div id="bannerPagoExitoso" class="aviso-ok" hidden style="display:none;align-items:center;gap:.6rem;font-weight:500">
+        <i class="fa-solid fa-circle-check" style="font-size:1.2rem"></i>
+        <span id="textoPagoExitoso">Pago confirmado con éxito.</span>
+      </div>
+    </div>
+  `;
+}
+
 function dibujarFormulario() {
   return `
     <form class="panel" id="formReserva" novalidate>
@@ -126,9 +224,152 @@ function dibujarFormulario() {
       </div>
       <label for="obs" style="margin-top:.8rem;display:block">Observaciones del pedido (opcional)</label>
       <textarea id="obs" maxlength="200" placeholder="Mensaje para la torta, dedicatoria, etc."></textarea>
-      <p class="aviso-carrito" id="errorForm" hidden></p>
+
+      ${dibujarSeccionPago()}
+
+      <p class="aviso-carrito" id="errorForm" hidden style="margin-top:1rem;margin-bottom:0"></p>
       <button class="btn btn-dorado btn-bloque" id="confirmar" type="submit" style="margin-top:1.4rem">Confirmar pedido</button>
     </form>`;
+}
+
+function reiniciarEstadoPago() {
+  pagoConfirmado = false;
+  detallePagoSimulado = "";
+
+  const banner = document.getElementById("bannerPagoExitoso");
+  if (banner) {
+    banner.hidden = true;
+    banner.style.display = "none";
+  }
+
+  ["cardNumero", "cardTitular", "cardVencimiento", "cardCvv"].forEach((id) => {
+    const campo = document.getElementById(id);
+    if (campo) campo.disabled = false;
+  });
+
+  const btnTarjeta = document.getElementById("btnConfirmarPagoTarjeta");
+  if (btnTarjeta) {
+    btnTarjeta.disabled = false;
+    btnTarjeta.innerHTML = '<i class="fa-solid fa-shield-check"></i> Confirmar pago';
+  }
+
+  const btnQr = document.getElementById("btnConfirmarPagoQr");
+  if (btnQr) {
+    btnQr.disabled = false;
+    btnQr.innerHTML = '<i class="fa-solid fa-check-double"></i> Confirmar pago';
+  }
+
+  const errTarjeta = document.getElementById("errorPagoTarjeta");
+  if (errTarjeta) errTarjeta.hidden = true;
+}
+
+function mostrarExitoPago(texto) {
+  pagoConfirmado = true;
+  detallePagoSimulado = texto;
+  const banner = document.getElementById("bannerPagoExitoso");
+  const span = document.getElementById("textoPagoExitoso");
+  if (span) span.textContent = texto;
+  if (banner) {
+    banner.hidden = false;
+    banner.style.display = "flex";
+  }
+  mostrarError("");
+}
+
+function configurarEventosPago() {
+  const inputNumero = document.getElementById("cardNumero");
+  const inputVenc = document.getElementById("cardVencimiento");
+  const inputCvv = document.getElementById("cardCvv");
+
+  // Formato automático de tarjeta: 0000 0000 0000 0000
+  inputNumero.addEventListener("input", () => {
+    const digitos = inputNumero.value.replace(/\D/g, "").slice(0, 16);
+    inputNumero.value = digitos.replace(/(.{4})/g, "$1 ").trim();
+  });
+
+  // Formato automático de vencimiento: MM/AA
+  inputVenc.addEventListener("input", () => {
+    const digitos = inputVenc.value.replace(/\D/g, "").slice(0, 4);
+    inputVenc.value = digitos.length > 2 ? digitos.slice(0, 2) + "/" + digitos.slice(2) : digitos;
+  });
+
+  // Solo números en CVV
+  inputCvv.addEventListener("input", () => {
+    inputCvv.value = inputCvv.value.replace(/\D/g, "").slice(0, 4);
+  });
+
+  // Cambiar entre Tarjeta, QR y Contra entrega
+  document.querySelectorAll("input[name=metodoPago]").forEach((radio) =>
+    radio.addEventListener("change", () => {
+      const metodo = metodoPagoSeleccionado();
+      document.getElementById("bloquePagoTarjeta").hidden = metodo !== "TARJETA";
+      document.getElementById("bloquePagoQr").hidden = metodo !== "YAPE_PLIN";
+      document.getElementById("bloquePagoContraEntrega").hidden = metodo !== "CONTRA_ENTREGA";
+      reiniciarEstadoPago();
+      mostrarError("");
+    })
+  );
+
+  // Botón "Confirmar pago" para TARJETA
+  document.getElementById("btnConfirmarPagoTarjeta").addEventListener("click", () => {
+    const err = document.getElementById("errorPagoTarjeta");
+    err.hidden = true;
+
+    const numero = inputNumero.value.replace(/\s+/g, "");
+    const titular = document.getElementById("cardTitular").value.trim();
+    const venc = inputVenc.value.trim();
+    const cvv = inputCvv.value.trim();
+
+    if (!/^\d{16}$/.test(numero)) {
+      err.textContent = "Ingresa un número de tarjeta válido de 16 dígitos.";
+      err.hidden = false;
+      return;
+    }
+    if (titular.length < 3) {
+      err.textContent = "Ingresa el nombre del titular de la tarjeta.";
+      err.hidden = false;
+      return;
+    }
+    if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(venc)) {
+      err.textContent = "Ingresa la fecha de vencimiento en formato MM/AA (ej. 08/29).";
+      err.hidden = false;
+      return;
+    }
+    if (!/^\d{3,4}$/.test(cvv)) {
+      err.textContent = "Ingresa un código CVV válido de 3 o 4 dígitos.";
+      err.hidden = false;
+      return;
+    }
+
+    const btn = document.getElementById("btnConfirmarPagoTarjeta");
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando pago...';
+
+    setTimeout(() => {
+      ["cardNumero", "cardTitular", "cardVencimiento", "cardCvv"].forEach((id) => {
+        document.getElementById(id).disabled = true;
+      });
+      btn.innerHTML = '<i class="fa-solid fa-check"></i> Pago confirmado';
+      const ultimos4 = numero.slice(-4);
+      mostrarExitoPago(
+        `¡Pago exitoso con tarjeta •••• ${ultimos4} por ${formatearPrecio(totalActual())}! Ahora presiona "Confirmar pedido".`
+      );
+    }, 650);
+  });
+
+  // Botón "Confirmar pago" para QR (YAPE / PLIN)
+  document.getElementById("btnConfirmarPagoQr").addEventListener("click", () => {
+    const btn = document.getElementById("btnConfirmarPagoQr");
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verificando pago QR...';
+
+    setTimeout(() => {
+      btn.innerHTML = '<i class="fa-solid fa-check"></i> Pago confirmado';
+      mostrarExitoPago(
+        `¡Pago exitoso con QR (Yape / Plin) por ${formatearPrecio(totalActual())}! Ahora presiona "Confirmar pedido".`
+      );
+    }, 650);
+  });
 }
 
 function inicializarMapa() {
@@ -223,7 +464,6 @@ async function obtenerIdDireccion(modalidad) {
     return nueva.id_direccion;
   }
 
-  // Si es Recojo en el local
   const recojoExistente = direccionesGuardadas.find((d) => /recojo/i.test(d.direccion));
   if (recojoExistente) return recojoExistente.id_direccion;
 
@@ -241,9 +481,14 @@ async function registrarPedido(evento) {
   const fecha = document.getElementById("fecha").value;
   const hora = document.getElementById("hora").value || "10:00";
   const modalidad = document.querySelector("input[name=modalidad]:checked").value;
+  const metodoPago = metodoPagoSeleccionado();
 
   if (!fecha) return mostrarError("Elige la fecha de entrega.");
   if (fecha < hoyISO()) return mostrarError("La fecha de entrega no puede ser anterior a hoy.");
+
+  if ((metodoPago === "TARJETA" || metodoPago === "YAPE_PLIN") && !pagoConfirmado) {
+    return mostrarError('Primero presiona el botón "Confirmar pago" para validar tu pago antes de registrar el pedido.');
+  }
 
   const boton = document.getElementById("confirmar");
   boton.disabled = true;
@@ -257,6 +502,7 @@ async function registrarPedido(evento) {
       direccion: { id_direccion: idDireccion },
       fecha_entrega: fecha + "T" + hora + ":00",
       modalidad_entrega: modalidad,
+      metodo_pago: metodoPago,
       observacion: notas || null,
       detalles: productosPedido.map(({ producto, cantidad }) => ({
         producto: { id_producto: producto.id_producto },
@@ -297,24 +543,27 @@ async function iniciar() {
     zonaCheckout.innerHTML = dibujarFormulario() + dibujarResumen();
     zonaCheckout.querySelectorAll(".item img").forEach(conRespaldo);
     actualizarTotales();
+    configurarEventosPago();
 
     const formulario = document.getElementById("formReserva");
     formulario.addEventListener("submit", registrarPedido);
     formulario.addEventListener("input", () => mostrarError(""));
 
-    // Mostrar/ocultar bloque de Delivery y mapa
     document.querySelectorAll("input[name=modalidad]").forEach((radio) =>
       radio.addEventListener("change", () => {
         const esDelivery = document.querySelector("input[name=modalidad]:checked").value === "Delivery";
         document.getElementById("bloqueDireccion").hidden = !esDelivery;
         actualizarTotales();
+        if (pagoConfirmado) {
+          reiniciarEstadoPago();
+          mostrarError("El monto total cambió por la modalidad de entrega. Vuelve a presionar 'Confirmar pago'.");
+        }
         if (esDelivery && !document.getElementById("formNuevaDireccion").hidden) {
           inicializarMapa();
         }
       })
     );
 
-    // Cambiar entre una dirección guardada y "+ Agregar una nueva dirección"
     document.querySelectorAll('input[name="dirSeleccionada"]').forEach((radio) =>
       radio.addEventListener("change", () => {
         const esNueva = document.querySelector('input[name="dirSeleccionada"]:checked').value === "NUEVA";
@@ -323,7 +572,6 @@ async function iniciar() {
       })
     );
 
-    // Botones rápidos para el alias ("Casa", "Trabajo", "Pareja")
     document.querySelectorAll(".btn-alias").forEach((btn) =>
       btn.addEventListener("click", () => {
         document.getElementById("aliasDir").value = btn.dataset.alias;

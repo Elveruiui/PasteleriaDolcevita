@@ -53,6 +53,11 @@ const Api = {
   registro: (datos) => enviar("/auth/registro", "POST", datos),
   usuarioActual: () => pedir("/auth/me"),
   logout: () => enviar("/auth/logout", "POST"),
+  cancelarPedidoCliente: (id) => enviar("/pedido/cancelarCliente/" + encodeURIComponent(id), "PUT"),
+  entregaDePedido: (id) => pedir("/pedido/entrega/" + encodeURIComponent(id)),
+  resenasDeProducto: (idProducto) => pedir("/resena/producto/" + encodeURIComponent(idProducto)),
+  elegibilidadResena: (idProducto) => pedir("/resena/elegibilidad/" + encodeURIComponent(idProducto)),
+  guardarResena: (datos) => enviar("/resena/guardar", "POST", datos),
 };
 
 const CLAVE_SESION_CACHE = "dolcevita_usuario";

@@ -17,6 +17,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import com.example.model.Entrega;
+import com.example.service.EntregaService;
+import com.example.service.ReporteService;
+
 import com.example.model.Pedido;
 import com.example.service.PedidoService;
 
@@ -26,6 +34,13 @@ public class PedidoController {
 
     @Autowired
     private PedidoService pedidoService;
+    
+
+    @Autowired
+    private ReporteService reporteService;
+
+    @Autowired
+    private EntregaService entregaService;
 
     
     @GetMapping("/listarPedidos")
@@ -120,5 +135,76 @@ public class PedidoController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al eliminar el pedido: " + e.getMessage());
         }
+    }
+    
+ // Nuevos endpoints dentro de PedidoController:
+    @PutMapping("/cancelarCliente/{id}")
+    public ResponseEntity<?> cancelarPorCliente(@PathVariable Long id) {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String correo = auth != null ? auth.getName() : null;
+            Pedido cancelado = pedidoService.cancelarPorCliente(id, correo);
+            return ResponseEntity.ok(cancelado);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/entrega/{id}")
+    public ResponseEntity<?> entregaDelPedido(@PathVariable Long id) {
+        try {
+            Pedido pedido = pedidoService.listarID(id);
+            if (pedido == null || !puedeVerPedido(pedido)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No autorizado.");
+            }
+            Entrega entrega = entregaService.buscarPorPedido(id);
+            if (entrega == null) {
+                return ResponseEntity.noContent().build();
+            }
+            Map<String, Object> info = new LinkedHashMap<>();
+            info.put("estado", entrega.getEstado());
+            info.put("fecha_asignacion", entrega.getFecha_asignacion());
+            info.put("fecha_entrega", entrega.getFecha_entrega());
+            if (entrega.getMotorizado() != null) {
+                String nom = ((entrega.getMotorizado().getNombre() != null ? entrega.getMotorizado().getNombre() : "")
+                        + " " + (entrega.getMotorizado().getApellido() != null ? entrega.getMotorizado().getApellido() : "")).trim();
+                info.put("motorizado", nom);
+                info.put("telefono", entrega.getMotorizado().getTelefono());
+            }
+            return ResponseEntity.ok(info);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al consultar la entrega.");
+        }
+    }
+
+    @GetMapping("/comprobante/{id}")
+    public ResponseEntity<?> descargarComprobante(@PathVariable Long id) {
+        try {
+            Pedido pedido = pedidoService.listarID(id);
+            if (pedido == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Pedido no encontrado.");
+            }
+            if (!puedeVerPedido(pedido)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No tienes permiso para descargar este comprobante.");
+            }
+            byte[] pdf = reporteService.generarComprobantePedidoPdf(pedido);
+            String nombre = String.format("boleta-DV-%05d.pdf", pedido.getId_pedido());
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + nombre + "\"")
+                    .body(pdf);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al generar la boleta PDF.");
+        }
+    }
+
+    private boolean puedeVerPedido(Pedido pedido) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) return false;
+        boolean esAdminOMotor = auth.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMINISTRADOR".equals(a.getAuthority()) || "ROLE_MOTORIZADO".equals(a.getAuthority()));
+        if (esAdminOMotor) return true;
+        return pedido.getUsuario() != null && auth.getName() != null
+                && auth.getName().equalsIgnoreCase(pedido.getUsuario().getCorreo());
     }
 }

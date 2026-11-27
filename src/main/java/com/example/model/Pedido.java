@@ -38,6 +38,7 @@ public class Pedido {
     private LocalDateTime fecha_pedido;
     private LocalDateTime fecha_entrega;
     private String modalidad_entrega;
+    private String metodo_pago;
     private String estado;
     private BigDecimal total;
     private BigDecimal costo_delivery;
@@ -47,25 +48,41 @@ public class Pedido {
     @JsonIgnoreProperties("pedido")
     private List<DetallePedido> detalles;
 
+
+
     public Pedido() {
-        super();
-    }
+		super();
+	}
 
-    public Pedido(Long id_pedido, Usuario usuario, DireccionUsuario direccion, LocalDateTime fecha_pedido,
-            LocalDateTime fecha_entrega, String modalidad_entrega, String estado, BigDecimal total, String observacion) {
-        super();
-        this.id_pedido = id_pedido;
-        this.usuario = usuario;
-        this.direccion = direccion;
-        this.fecha_pedido = fecha_pedido;
-        this.fecha_entrega = fecha_entrega;
-        this.modalidad_entrega = modalidad_entrega;
-        this.estado = estado;
-        this.total = total;
-        this.observacion = observacion;
-    }
+	public Pedido(Long id_pedido, Usuario usuario, DireccionUsuario direccion, LocalDateTime fecha_pedido,
+			LocalDateTime fecha_entrega, String modalidad_entrega, String metodo_pago, String estado, BigDecimal total,
+			BigDecimal costo_delivery, String observacion, List<DetallePedido> detalles) {
+		super();
+		this.id_pedido = id_pedido;
+		this.usuario = usuario;
+		this.direccion = direccion;
+		this.fecha_pedido = fecha_pedido;
+		this.fecha_entrega = fecha_entrega;
+		this.modalidad_entrega = modalidad_entrega;
+		this.metodo_pago = metodo_pago;
+		this.estado = estado;
+		this.total = total;
+		this.costo_delivery = costo_delivery;
+		this.observacion = observacion;
+		this.detalles = detalles;
+	}
+	
+	
 
-    public Long getId_pedido() {
+	public String getMetodo_pago() {
+		return metodo_pago;
+	}
+
+	public void setMetodo_pago(String metodo_pago) {
+		this.metodo_pago = metodo_pago;
+	}
+
+	public Long getId_pedido() {
         return id_pedido;
     }
 
