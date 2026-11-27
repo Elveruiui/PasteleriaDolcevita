@@ -12,15 +12,28 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+/**
+ * Configuración de Spring Security. Define las rutas públicas, las rutas que requieren sesión y los permisos de cada rol: Cliente, Administrador y Motorizado.
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
+    /**
+     * Codificador de contraseñas con BCrypt.
+     * @return codificador BCrypt
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Define las reglas de acceso por ruta y rol, y las respuestas 401 y 403 cuando el acceso no está permitido.
+     * @param http configuración de seguridad HTTP
+     * @return cadena de filtros de seguridad
+     * @throws Exception si la configuración no se puede construir
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -36,6 +49,7 @@ public class SecurityConfig {
                 .antMatchers("/auth/**").permitAll()
                 .antMatchers("/actuator/health/**", "/actuator/info").permitAll()
                 .antMatchers("/actuator/**").hasRole("ADMINISTRADOR")
+                .antMatchers("/mantenimiento/**").hasRole("ADMINISTRADOR")
 
                 .antMatchers(HttpMethod.GET,
                     "/producto/listarProductos",

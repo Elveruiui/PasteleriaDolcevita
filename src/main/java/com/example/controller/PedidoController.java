@@ -28,6 +28,9 @@ import com.example.service.ReporteService;
 import com.example.model.Pedido;
 import com.example.service.PedidoService;
 
+/**
+ * Controlador REST de los pedidos. Expone las rutas /pedido para listar, registrar, actualizar y eliminar pedidos.
+ */
 @RestController
 @RequestMapping("/pedido")
 public class PedidoController {
@@ -43,6 +46,10 @@ public class PedidoController {
     private EntregaService entregaService;
 
     
+    /**
+     * Lista todos los pedidos.
+     * @return lista de pedidos
+     */
     @GetMapping("/listarPedidos")
     public ResponseEntity<?> listarPedidos() {
         try {
@@ -53,6 +60,11 @@ public class PedidoController {
         }
     }
 
+    /**
+     * Lista los pedidos de un cliente.
+     * @param idUsuario identificador del cliente
+     * @return pedidos del cliente
+     */
     @GetMapping("/listarPorUsuario/{idUsuario}")
     public ResponseEntity<?> listarPorUsuario(@PathVariable("idUsuario") Long idUsuario) {
         try {
@@ -63,6 +75,11 @@ public class PedidoController {
         }
     } 
     
+    /**
+     * Lista los pedidos en un estado.
+     * @param estado estado buscado
+     * @return pedidos en ese estado
+     */
     @GetMapping("/listarEstado/{estado}")
     public ResponseEntity<?> listarPedidoPorEstado(@PathVariable("estado") String estado) {
         try {
@@ -74,6 +91,11 @@ public class PedidoController {
     }
 
     
+    /**
+     * Obtiene un pedido por su identificador.
+     * @param id identificador del pedido
+     * @return el pedido o 404 si no existe
+     */
     @GetMapping("/listarId/{id}")
     public ResponseEntity<?> listarPedId(@PathVariable("id") Long id) {
         try {
@@ -88,6 +110,11 @@ public class PedidoController {
     }
 
     
+    /**
+     * Registra un nuevo pedido.
+     * @param pedido pedido con sus detalles
+     * @return el pedido creado o 400 si los datos no son válidos
+     */
     @PostMapping("/crear")
     public ResponseEntity<?> guardar(@RequestBody Pedido pedido) {
         try {
@@ -99,6 +126,12 @@ public class PedidoController {
     }
 
     
+    /**
+     * Cambia el estado de un pedido validando el rol del usuario autenticado.
+     * @param id identificador del pedido
+     * @param estado nuevo estado
+     * @return el pedido actualizado o 400 si el cambio no está permitido
+     */
     @PutMapping("/actualizarEstado/{id}")
     public ResponseEntity<?> actualizarEstado(@PathVariable Long id, @RequestParam String estado) {
         try {
@@ -113,6 +146,12 @@ public class PedidoController {
     }
 
     
+    /**
+     * Actualiza los productos y la fecha de entrega de un pedido.
+     * @param id identificador del pedido
+     * @param pedido nuevos detalles
+     * @return el pedido actualizado
+     */
     @PutMapping("/actualizarDetalles/{id}")
     public ResponseEntity<?> actualizarDetallesYFecha(@PathVariable Long id, @RequestBody Pedido pedido) {
         try {
@@ -124,6 +163,11 @@ public class PedidoController {
     }
 
    
+    /**
+     * Elimina un pedido.
+     * @param id identificador del pedido
+     * @return confirmación o 404 si no existe
+     */
     @DeleteMapping("/eliminar/{id}")
     public ResponseEntity<?> eliminar(@PathVariable Long id) {
         try {

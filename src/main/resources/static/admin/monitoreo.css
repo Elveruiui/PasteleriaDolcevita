@@ -41,3 +41,8 @@
 .mon-enlaces a { color: var(--vino); text-decoration: underline; }
 @media (max-width: 1100px) { .mon-rejilla.cuatro { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 640px) { .mon-rejilla.cuatro, .mon-rejilla.dos { grid-template-columns: 1fr; } .mon-general { flex-wrap: wrap; } }
+.mant-acciones { display: flex; flex-wrap: wrap; gap: .7rem; margin-bottom: 1rem; }
+.mant-detalle { display: block; font-size: .74rem; color: var(--gris); margin-top: .2rem; }
+.mant-detalle code, .mant-carpeta code { background: var(--crema-oscuro); padding: .05rem .35rem; border-radius: 6px; font-size: .74rem; }
+.mant-carpeta { font-size: .82rem; color: var(--gris); margin-bottom: .6rem; }
+.mant-carpeta i, .mant-icono { color: var(--dorado-oscuro); }

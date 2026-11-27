@@ -20,6 +20,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.model.Entrega;
 import com.example.service.EntregaService;
 
+/**
+ * Controlador REST de las entregas. Expone las rutas /entrega para la asignación de motorizados y el cambio de estado desde la interfaz del Motorizado.
+ */
 @RestController
 @RequestMapping("/entrega")
 public class EntregaController {
@@ -27,6 +30,10 @@ public class EntregaController {
     @Autowired
     private EntregaService entregaService;
 
+    /**
+     * Lista todas las entregas.
+     * @return lista de entregas
+     */
     @GetMapping("/listarEntregas")
     public ResponseEntity<?> listarEntregas() {
         try {
@@ -37,6 +44,11 @@ public class EntregaController {
         }
     }
 
+    /**
+     * Lista las entregas de un motorizado por su nombre.
+     * @param nombre nombre del motorizado
+     * @return entregas encontradas
+     */
     @GetMapping("/listarNombre/{nombre}")
     public ResponseEntity<?> listarEntNombreMotorizado(@PathVariable("nombre") String nombre) {
         try {
@@ -47,6 +59,11 @@ public class EntregaController {
         }
     }
 
+    /**
+     * Lista las entregas asignadas a un motorizado.
+     * @param idMotorizado identificador del motorizado
+     * @return entregas del motorizado
+     */
     @GetMapping("/listarPorMotorizado/{idMotorizado}")
     public ResponseEntity<?> listarPorMotorizado(@PathVariable("idMotorizado") Long idMotorizado) {
         try {
@@ -57,6 +74,11 @@ public class EntregaController {
         }
     }
 
+    /**
+     * Obtiene una entrega por su identificador.
+     * @param id identificador de la entrega
+     * @return la entrega o 404 si no existe
+     */
     @GetMapping("/listarId/{id}")
     public ResponseEntity<?> listarEntId(@PathVariable("id") Long id) {
         try {
@@ -70,6 +92,12 @@ public class EntregaController {
         }
     }
 
+    /**
+     * Cambia el estado de una entrega. Solo puede hacerlo el motorizado asignado, identificado por la sesión.
+     * @param id identificador de la entrega
+     * @param datos estado y observación
+     * @return la entrega actualizada o 400 si el cambio no está permitido
+     */
     @PutMapping("/cambiarEstado/{id}")
     public ResponseEntity<?> cambiarEstado(@PathVariable("id") Long id, @RequestBody Map<String, Object> datos) {
         try {
@@ -85,6 +113,11 @@ public class EntregaController {
         }
     }
 
+    /**
+     * Asigna un motorizado a un pedido delivery.
+     * @param entrega entrega a registrar
+     * @return la entrega creada
+     */
     @PostMapping("/crear")
     public ResponseEntity<?> guardar(@RequestBody Entrega entrega) {
         try {
@@ -95,6 +128,12 @@ public class EntregaController {
         }
     }
 
+    /**
+     * Actualiza los datos de una entrega.
+     * @param id identificador de la entrega
+     * @param entrega nuevos datos
+     * @return la entrega actualizada
+     */
     @PutMapping("/actualizar/{id}")
     public ResponseEntity<?> actualizar(@PathVariable Long id, @RequestBody Entrega entrega) {
         try {
@@ -108,6 +147,11 @@ public class EntregaController {
         }
     }
 
+    /**
+     * Elimina una entrega.
+     * @param id identificador de la entrega
+     * @return confirmación o 404 si no existe
+     */
     @DeleteMapping("/eliminar/{id}")
     public ResponseEntity<?> eliminar(@PathVariable Long id) {
         try {
